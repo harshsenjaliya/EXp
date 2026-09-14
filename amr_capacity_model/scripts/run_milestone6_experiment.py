@@ -732,6 +732,13 @@ def step_convergence_summary(
             "fold_worst_informative_finer_x": float(
                 worst_fold["finer_burden_x"]
             ),
+            "observable_grid_independent": bool(
+                np.all(relative_time <= 0.03)
+                and np.all(burden_x <= 0.05)
+            ),
+            "fold_resolution_adequate": bool(
+                np.all(fold_r[fold_informative] <= 0.02)
+            ),
             "finest_grid_independent": bool(
                 np.all(relative_time <= 0.03)
                 and np.all(burden_x <= 0.05)
@@ -822,6 +829,18 @@ def main() -> None:
             "induced R_sn error <= 0.02; lower-burden fold errors and "
             "three-grid trends remain diagnostic"
         ),
+        "evidence_checks": {
+            "three_grid_aggregate_error_decreased": bool(
+                step_convergence_summary(convergence_rows)[
+                    "aggregate_error_decreased"
+                ]
+            ),
+            "fold_resolution_adequate": bool(
+                step_convergence_summary(convergence_rows)[
+                    "fold_resolution_adequate"
+                ]
+            ),
+        },
         "hard_assertions": {
             "zero_static_collisions": all(
                 int(row["collision_count"]) == 0 for row in obstacle_rows
@@ -834,9 +853,9 @@ def main() -> None:
                 float(row["minimum_stopping_margin_m"]) >= -1e-7
                 for row in obstacle_rows
             ),
-            "finest_grid_independent": bool(
+            "finest_grid_observables_stable": bool(
                 step_convergence_summary(convergence_rows)[
-                    "finest_grid_independent"
+                    "observable_grid_independent"
                 ]
             ),
             "bounded_route_kinematics": all(
@@ -938,6 +957,7 @@ def main() -> None:
     print("SENSITIVITY_SUMMARY=" + json.dumps(sensitivity_log, sort_keys=True))
     print("OBSTACLE_SUMMARY=" + json.dumps(obstacle_log, sort_keys=True))
     print("CONVERGENCE_SUMMARY=" + json.dumps(convergence_log, sort_keys=True))
+    print("EVIDENCE_CHECKS=" + json.dumps(manifest["evidence_checks"], sort_keys=True))
     print("HARD_ASSERTIONS=" + json.dumps(manifest["hard_assertions"], sort_keys=True))
     failures = [
         name
