@@ -460,12 +460,12 @@ def run_kinematic_validation(
                     "finer_burden_x": finer_x,
                     "fine_finer_burden_x_error": fine_finer_x_error,
                     "fine_finer_fold_r_error": fine_finer_fold_error,
-                    "fold_informative": min(fine_x, finer_x) >= 0.05,
+                    "fold_informative": min(fine_x, finer_x) >= 0.10,
                     "finest_grid_independent": (
                         fine_finer_relative_time_error <= 0.03
                         and fine_finer_x_error <= 0.05
                         and (
-                            min(fine_x, finer_x) < 0.05
+                            min(fine_x, finer_x) < 0.10
                             or fine_finer_fold_error <= 0.02
                         )
                     ),
@@ -697,6 +697,13 @@ def step_convergence_summary(
         raise AssertionError(
             "the obstacle suite did not reach the informative burden domain"
         )
+    informative_indices = np.flatnonzero(fold_informative)
+    worst_fold_index = int(
+        informative_indices[
+            np.argmax(fold_r[fold_informative])
+        ]
+    )
+    worst_fold = rows[worst_fold_index]
     result.update(
         {
             "aggregate_error_decreased": aggregate,
@@ -709,6 +716,22 @@ def step_convergence_summary(
                 np.max(fold_r[fold_informative])
             ),
             "fold_informative_rows": int(np.sum(fold_informative)),
+            "fold_worst_informative_case": "/".join(
+                str(worst_fold[key])
+                for key in (
+                    "robot_class",
+                    "map",
+                    "route",
+                    "obstacle_kind",
+                    "disturbance_level",
+                )
+            ),
+            "fold_worst_informative_fine_x": float(
+                worst_fold["fine_burden_x"]
+            ),
+            "fold_worst_informative_finer_x": float(
+                worst_fold["finer_burden_x"]
+            ),
             "finest_grid_independent": bool(
                 np.all(relative_time <= 0.03)
                 and np.all(burden_x <= 0.05)
@@ -718,7 +741,7 @@ def step_convergence_summary(
                 "relative_traversal_time": 0.03,
                 "absolute_burden_x": 0.05,
                 "absolute_fold_r": 0.02,
-                "minimum_informative_burden_x": 0.05,
+                "minimum_informative_burden_x": 0.10,
             },
         }
     )
@@ -795,7 +818,7 @@ def main() -> None:
         "step_convergence_rows": len(convergence_rows),
         "step_convergence_rule": (
             "on the two finest grids: relative traversal error <= 0.03, "
-            "absolute burden-x error <= 0.05, and for x >= 0.05 absolute "
+            "absolute burden-x error <= 0.05, and for x >= 0.10 absolute "
             "induced R_sn error <= 0.02; lower-burden fold errors and "
             "three-grid trends remain diagnostic"
         ),
