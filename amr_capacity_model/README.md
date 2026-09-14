@@ -36,7 +36,11 @@ shield-coupled AMR fleet study. It implements:
 - fail-closed claim auditing that separates coverage, prediction, and fold
   identification;
 - spatially typed multi-type estimation with exact and LP \(G^\star\)
-  cross-checks and an inherited-root-gate negative control.
+  cross-checks and an inherited-root-gate negative control;
+- exposure-aware censored multitype branching inference with rollout-cluster
+  bootstrap and known sub/supercritical synthetic validation;
+- differential-drive kinematic speed envelopes, 2D Bezier routes, static
+  footprint clearance, and guarded route-obstacle benchmarks across six maps.
 
 The equations describe a research model.  They do not constitute an industrial
 safety certification or a protective-field design method.
@@ -57,6 +61,9 @@ publication claim boundary.
 See [`MILESTONE_5_RESULTS.md`](MILESTONE_5_RESULTS.md) for the finite-estimator
 benchmark, duplicate-ID forensic audit, generalized multi-type identity, and
 corrected non-normality experiment.
+See [`MILESTONE_6_RESULTS.md`](MILESTONE_6_RESULTS.md) for the censored
+likelihood, differential-drive formulation, map/obstacle catalogue, registered
+experiments, and explicit scope boundary.
 
 ## Run the validation suite
 
@@ -132,6 +139,20 @@ root-gate inheritance only as a diagonal negative control. The generated quick
 profile finds subcritical but non-normal amplification; it does not establish a
 supercritical transition. Use `--profile paper` for the longer replicated
 experiment.
+
+## Run Milestone 6
+
+```bash
+PYTHONPATH=src python scripts/run_milestone6_experiment.py --profile smoke
+PYTHONPATH=src python scripts/run_milestone6_experiment.py --profile quick
+```
+
+The first experiment recovers known subcritical and supercritical multitype
+matrices under temporal/population censoring and compares against the
+complete-tree ablation. The second computes curvature-aware nominal time and
+runs stationary obstacle, pedestrian, forklift, closure, and occlusion
+disturbances on straight, L-turn, S-curve, merge, intersection, and warehouse
+routes. Use `--profile paper` only for paper-facing estimates.
 
 After generating the experiments, run the fail-closed claim ledger:
 
