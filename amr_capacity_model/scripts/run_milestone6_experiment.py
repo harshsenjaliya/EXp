@@ -247,6 +247,10 @@ def run_kinematic_validation(
                 "traversal_time_s": result.traversal_time,
                 "delay_s": result.delay,
                 "severity_weighted_loss_s": result.severity_weighted_loss,
+                "dimensionless_burden_x": (
+                    result.severity_weighted_loss / result.nominal_time
+                ),
+                "delay_fraction": result.delay / result.nominal_time,
                 "activation_delay_s": activation_delay,
                 "collision_count": result.collision_count,
                 "obstacle_violation_count": result.obstacle_violation_count,
@@ -258,6 +262,20 @@ def run_kinematic_validation(
                     result.max_lateral_acceleration
                 ),
                 "max_wheel_speed_mps": result.max_abs_wheel_speed,
+                "yaw_rate_utilization": (
+                    result.max_abs_yaw_rate / limits.max_yaw_rate
+                ),
+                "yaw_acceleration_utilization": (
+                    result.max_abs_yaw_acceleration
+                    / limits.max_yaw_acceleration
+                ),
+                "lateral_acceleration_utilization": (
+                    result.max_lateral_acceleration
+                    / limits.max_lateral_acceleration
+                ),
+                "wheel_speed_utilization": (
+                    result.max_abs_wheel_speed / limits.max_wheel_speed
+                ),
             }
         )
     write_rows(output / "milestone6_obstacle_benchmark.csv", obstacle_rows)
@@ -402,8 +420,58 @@ def main() -> None:
         json.dump(manifest, stream, indent=2)
         stream.write("\n")
 
+    branching_log = [
+        {
+            key: row[key]
+            for key in (
+                "true_rho",
+                "exposure_rho",
+                "rho_ci_lower",
+                "rho_ci_upper",
+                "p_rho_gt_1",
+                "naive_rho",
+                "events",
+            )
+        }
+        for row in branching_rows
+    ]
+    obstacle_log = {
+        "rows": len(obstacle_rows),
+        "minimum_x": min(
+            (float(row["dimensionless_burden_x"]) for row in obstacle_rows),
+            default=None,
+        ),
+        "maximum_x": max(
+            (float(row["dimensionless_burden_x"]) for row in obstacle_rows),
+            default=None,
+        ),
+        "maximum_yaw_rate_utilization": max(
+            (float(row["yaw_rate_utilization"]) for row in obstacle_rows),
+            default=None,
+        ),
+        "maximum_yaw_acceleration_utilization": max(
+            (
+                float(row["yaw_acceleration_utilization"])
+                for row in obstacle_rows
+            ),
+            default=None,
+        ),
+        "maximum_lateral_acceleration_utilization": max(
+            (
+                float(row["lateral_acceleration_utilization"])
+                for row in obstacle_rows
+            ),
+            default=None,
+        ),
+        "maximum_wheel_speed_utilization": max(
+            (float(row["wheel_speed_utilization"]) for row in obstacle_rows),
+            default=None,
+        ),
+    }
     print(f"wrote Milestone 6 artifacts to {output}")
-    print(json.dumps(manifest["hard_assertions"], indent=2))
+    print("BRANCHING_SUMMARY=" + json.dumps(branching_log, sort_keys=True))
+    print("OBSTACLE_SUMMARY=" + json.dumps(obstacle_log, sort_keys=True))
+    print("HARD_ASSERTIONS=" + json.dumps(manifest["hard_assertions"], sort_keys=True))
 
 
 if __name__ == "__main__":
