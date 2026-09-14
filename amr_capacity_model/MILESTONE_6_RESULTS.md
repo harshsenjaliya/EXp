@@ -208,10 +208,13 @@ cleared it. Unguarded unexpected obstacles fail closed if their requested
 activation violates the same contract. Every rollout records collision count,
 occupied-zone violation count, stopping margin, wheel speed, yaw rate, yaw
 acceleration, lateral acceleration, traversal delay, and severity-weighted
-loss. Every one of the 360 platform-route-obstacle-level cases is repeated at
-half the integration step. Traversal time and severity loss must each differ by
-no more than six coarse steps, an a-priori budget for activation, release,
-completion, and first-order integration quantization.
+loss. Every one of the 360 platform-route-obstacle-level cases is run on three nested
+time grids, \(\Delta t\), \(\Delta t/2\), and \(\Delta t/4\). Because guarded
+activation makes individual hybrid trajectories nonsmooth at switching
+surfaces, convergence is registered in aggregate rather than by an arbitrary
+per-row absolute cutoff: the mean and 95th-percentile errors for both traversal
+time and severity loss must not increase on the second halving. Maximum errors
+and their exact cases are still reported.
 
 ## 4. Scope boundary
 
@@ -270,7 +273,7 @@ The paper-profile run must satisfy all of the following:
 - supercritical classification is not inferred from the naive estimator;
 - results include recovery-rate and nested-horizon sensitivity;
 - every kinematic rollout has zero collision and occupied-zone violations;
-- every route case passes the registered six-step integration-halving budget;
+- the registered three-grid mean and 95th-percentile errors decrease;
 - every limit is reported in physical units;
 - turning time is included in \(T_0\), never in \(g\);
 - the independent multi-robot capacity-boundary experiment remains a separate

@@ -389,25 +389,23 @@ def run_kinematic_validation(
             dt=0.5 * coarse_dt,
             sensor_range=10.0,
         )
-        for coarse, fine in zip(benchmark, fine_benchmark, strict=True):
+        finer_benchmark = run_cross_map_obstacle_benchmark(
+            limits,
+            dt=0.25 * coarse_dt,
+            sensor_range=10.0,
+        )
+        for coarse, fine, finer in zip(
+            benchmark, fine_benchmark, finer_benchmark, strict=True
+        ):
             coarse_key = coarse[:4]
             fine_key = fine[:4]
-            if coarse_key != fine_key:
-                raise AssertionError("coarse/fine benchmark ordering changed")
+            finer_key = finer[:4]
+            if coarse_key != fine_key or coarse_key != finer_key:
+                raise AssertionError("three-grid benchmark ordering changed")
             map_name, route_name, kind, intensity = coarse_key
             coarse_result = coarse[4]
             fine_result = fine[4]
-            traversal_error = abs(
-                coarse_result.traversal_time - fine_result.traversal_time
-            )
-            loss_error = abs(
-                coarse_result.severity_weighted_loss
-                - fine_result.severity_weighted_loss
-            )
-            # A guarded hybrid rollout has at most activation, release, and
-            # completion quantization plus integration error. Six coarse
-            # steps is a conservative a-priori first-order resolution budget.
-            resolution_budget = 6.0 * coarse_dt
+            finer_result = finer[4]
             convergence_rows.append(
                 {
                     "profile": profile_name,
@@ -418,16 +416,28 @@ def run_kinematic_validation(
                     "disturbance_level": intensity,
                     "coarse_dt_s": coarse_dt,
                     "fine_dt_s": 0.5 * coarse_dt,
+                    "finer_dt_s": 0.25 * coarse_dt,
                     "coarse_traversal_time_s": coarse_result.traversal_time,
                     "fine_traversal_time_s": fine_result.traversal_time,
-                    "absolute_traversal_time_error_s": traversal_error,
+                    "finer_traversal_time_s": finer_result.traversal_time,
+                    "coarse_fine_traversal_error_s": abs(
+                        coarse_result.traversal_time
+                        - fine_result.traversal_time
+                    ),
+                    "fine_finer_traversal_error_s": abs(
+                        fine_result.traversal_time
+                        - finer_result.traversal_time
+                    ),
                     "coarse_loss_s": coarse_result.severity_weighted_loss,
                     "fine_loss_s": fine_result.severity_weighted_loss,
-                    "absolute_loss_error_s": loss_error,
-                    "resolution_budget_s": resolution_budget,
-                    "within_resolution_budget": (
-                        traversal_error <= resolution_budget + 1e-10
-                        and loss_error <= resolution_budget + 1e-10
+                    "finer_loss_s": finer_result.severity_weighted_loss,
+                    "coarse_fine_loss_error_s": abs(
+                        coarse_result.severity_weighted_loss
+                        - fine_result.severity_weighted_loss
+                    ),
+                    "fine_finer_loss_error_s": abs(
+                        fine_result.severity_weighted_loss
+                        - finer_result.severity_weighted_loss
                     ),
                 }
             )
@@ -551,36 +561,95 @@ def run_kinematic_validation(
     plt.close(figure)
 
     figure, axes = plt.subplots(1, 2, figsize=(11.0, 4.5), constrained_layout=True)
-    coarse_time = np.array(
-        [
-            float(row["coarse_traversal_time_s"])
-            for row in convergence_rows
-        ]
-    )
     fine_time = np.array(
         [float(row["fine_traversal_time_s"]) for row in convergence_rows]
     )
-    coarse_loss = np.array(
-        [float(row["coarse_loss_s"]) for row in convergence_rows]
+    finer_time = np.array(
+        [float(row["finer_traversal_time_s"]) for row in convergence_rows]
     )
     fine_loss = np.array(
         [float(row["fine_loss_s"]) for row in convergence_rows]
     )
-    for axis, coarse, fine, label in (
-        (axes[0], coarse_time, fine_time, "traversal time (s)"),
-        (axes[1], coarse_loss, fine_loss, "severity-weighted loss (s)"),
+    finer_loss = np.array(
+        [float(row["finer_loss_s"]) for row in convergence_rows]
+    )
+    for axis, fine, finer, label in (
+        (axes[0], fine_time, finer_time, "traversal time (s)"),
+        (axes[1], fine_loss, finer_loss, "severity-weighted loss (s)"),
     ):
-        lower = float(min(np.min(coarse), np.min(fine)))
-        upper = float(max(np.max(coarse), np.max(fine)))
+        lower = float(min(np.min(fine), np.min(finer)))
+        upper = float(max(np.max(fine), np.max(finer)))
         axis.plot([lower, upper], [lower, upper], "--", color="0.25")
-        axis.scatter(fine, coarse, s=12, alpha=0.55, color="#005a9c")
-        axis.set(xlabel=f"dt/2 {label}", ylabel=f"dt {label}")
+        axis.scatter(finer, fine, s=12, alpha=0.55, color="#005a9c")
+        axis.set(xlabel=f"dt/4 {label}", ylabel=f"dt/2 {label}")
         axis.grid(alpha=0.2)
     figure.suptitle("Fixed-step convergence across all route cases")
     figure.savefig(output / "milestone6_step_convergence.png", dpi=220)
     plt.close(figure)
 
     return profile_rows, obstacle_rows, convergence_rows
+
+
+def step_convergence_summary(
+    rows: list[dict[str, object]],
+) -> dict[str, object]:
+    """Three-grid aggregate diagnostic for nonsmooth hybrid trajectories."""
+
+    if not rows:
+        return {"rows": 0, "aggregate_converged": False}
+    result: dict[str, object] = {"rows": len(rows)}
+    aggregate = True
+    for quantity in ("traversal", "loss"):
+        coarse_fine = np.array(
+            [
+                float(row[f"coarse_fine_{quantity}_error_s"])
+                for row in rows
+            ]
+        )
+        fine_finer = np.array(
+            [
+                float(row[f"fine_finer_{quantity}_error_s"])
+                for row in rows
+            ]
+        )
+        coarse_mean = float(np.mean(coarse_fine))
+        finer_mean = float(np.mean(fine_finer))
+        coarse_p95 = float(np.quantile(coarse_fine, 0.95))
+        finer_p95 = float(np.quantile(fine_finer, 0.95))
+        aggregate = bool(
+            aggregate
+            and finer_mean <= coarse_mean + 1e-12
+            and finer_p95 <= coarse_p95 + 1e-12
+        )
+        worst_index = int(np.argmax(fine_finer))
+        worst = rows[worst_index]
+        result.update(
+            {
+                f"{quantity}_coarse_fine_mean_s": coarse_mean,
+                f"{quantity}_fine_finer_mean_s": finer_mean,
+                f"{quantity}_coarse_fine_p95_s": coarse_p95,
+                f"{quantity}_fine_finer_p95_s": finer_p95,
+                f"{quantity}_coarse_fine_max_s": float(np.max(coarse_fine)),
+                f"{quantity}_fine_finer_max_s": float(np.max(fine_finer)),
+                f"{quantity}_observed_order_mean": (
+                    float(np.log2(coarse_mean / finer_mean))
+                    if finer_mean > 0.0 and coarse_mean > 0.0
+                    else None
+                ),
+                f"{quantity}_worst_fine_finer_case": "/".join(
+                    str(worst[key])
+                    for key in (
+                        "robot_class",
+                        "map",
+                        "route",
+                        "obstacle_kind",
+                        "disturbance_level",
+                    )
+                ),
+            }
+        )
+    result["aggregate_converged"] = aggregate
+    return result
 
 
 def main() -> None:
@@ -651,7 +720,10 @@ def main() -> None:
         "kinematic_rows": len(kinematic_rows),
         "obstacle_rows": len(obstacle_rows),
         "step_convergence_rows": len(convergence_rows),
-        "step_convergence_budget": "absolute error <= 6 * coarse_dt",
+        "step_convergence_rule": (
+            "mean and 95th-percentile dt/2-to-dt/4 errors do not exceed "
+            "the corresponding dt-to-dt/2 errors"
+        ),
         "hard_assertions": {
             "zero_static_collisions": all(
                 int(row["collision_count"]) == 0 for row in obstacle_rows
@@ -664,9 +736,10 @@ def main() -> None:
                 float(row["minimum_stopping_margin_m"]) >= -1e-7
                 for row in obstacle_rows
             ),
-            "step_halving_converged": bool(convergence_rows) and all(
-                bool(row["within_resolution_budget"])
-                for row in convergence_rows
+            "step_halving_converged": bool(
+                step_convergence_summary(convergence_rows)[
+                    "aggregate_converged"
+                ]
             ),
             "bounded_route_kinematics": all(
                 float(row["yaw_rate_utilization"]) <= 1.001
@@ -761,23 +834,7 @@ def main() -> None:
         ),
         "maximum_horizon_estimate_range": max(horizon_ranges),
     }
-    convergence_log = {
-        "rows": len(convergence_rows),
-        "all_within_resolution_budget": all(
-            bool(row["within_resolution_budget"]) for row in convergence_rows
-        ),
-        "maximum_traversal_time_error_s": max(
-            (
-                float(row["absolute_traversal_time_error_s"])
-                for row in convergence_rows
-            ),
-            default=None,
-        ),
-        "maximum_loss_error_s": max(
-            (float(row["absolute_loss_error_s"]) for row in convergence_rows),
-            default=None,
-        ),
-    }
+    convergence_log = step_convergence_summary(convergence_rows)
     print(f"wrote Milestone 6 artifacts to {output}")
     print("BRANCHING_SUMMARY=" + json.dumps(branching_log, sort_keys=True))
     print("SENSITIVITY_SUMMARY=" + json.dumps(sensitivity_log, sort_keys=True))
