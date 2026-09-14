@@ -13,7 +13,7 @@ or merge-capacity simulator.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Iterable, Sequence
 
 import numpy as np
@@ -230,10 +230,11 @@ class RouteObstacle:
     half_width: float = 0.35
     guarded: bool = True
     reaction_time_multiplier: float = 1.0
+    intensity: str = "nominal"
 
     def __post_init__(self) -> None:
-        if not self.obstacle_id or not self.kind:
-            raise ValueError("obstacle_id and kind must be nonempty")
+        if not self.obstacle_id or not self.kind or not self.intensity:
+            raise ValueError("obstacle_id, kind, and intensity must be nonempty")
         numeric = (
             self.s,
             self.requested_start,
@@ -1070,11 +1071,11 @@ def standard_obstacle_suite(
     path: SampledPath,
     nominal_time: float,
 ) -> tuple[RouteObstacle, ...]:
-    """Five reproducible obstruction mechanisms with comparable timing."""
+    """Five mechanisms at light, medium, and heavy disturbance levels."""
 
     if not np.isfinite(nominal_time) or nominal_time <= 0.0:
         raise ValueError("nominal_time must be positive")
-    return (
+    base = (
         RouteObstacle(
             "stationary_pallet",
             "unexpected_stationary",
@@ -1115,18 +1116,30 @@ def standard_obstacle_suite(
             reaction_time_multiplier=1.8,
         ),
     )
-
+    levels = (("light", 0.45), ("medium", 1.0), ("heavy", 3.0))
+    result: list[RouteObstacle] = []
+    for level, multiplier in levels:
+        for obstacle in base:
+            result.append(
+                replace(
+                    obstacle,
+                    obstacle_id=f"{obstacle.obstacle_id}_{level}",
+                    duration=obstacle.duration * multiplier,
+                    intensity=level,
+                )
+            )
+    return tuple(result)
 
 def run_cross_map_obstacle_benchmark(
     limits: DifferentialDriveLimits | None = None,
     *,
     dt: float = 0.02,
     sensor_range: float = 10.0,
-) -> tuple[tuple[str, str, str, RouteSimulationResult], ...]:
+) -> tuple[tuple[str, str, str, str, RouteSimulationResult], ...]:
     """Run each obstacle mechanism independently on every catalogue route."""
 
     robot = DifferentialDriveLimits() if limits is None else limits
-    rows: list[tuple[str, str, str, RouteSimulationResult]] = []
+    rows: list[tuple[str, str, str, str, RouteSimulationResult]] = []
     for map_spec in standard_map_catalogue():
         assert_static_clearance(map_spec, robot)
         for route in map_spec.routes:
@@ -1150,5 +1163,13 @@ def run_cross_map_obstacle_benchmark(
                     raise AssertionError(
                         f"safety invariant failed on {map_spec.name}/{route.name}"
                     )
-                rows.append((map_spec.name, route.name, obstacle.kind, result))
+                rows.append(
+                    (
+                        map_spec.name,
+                        route.name,
+                        obstacle.kind,
+                        obstacle.intensity,
+                        result,
+                    )
+                )
     return tuple(rows)

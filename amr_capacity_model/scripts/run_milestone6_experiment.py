@@ -233,7 +233,7 @@ def run_kinematic_validation(
         sensor_range=10.0,
     )
     obstacle_rows: list[dict[str, object]] = []
-    for map_name, route_name, kind, result in benchmark:
+    for map_name, route_name, kind, intensity, result in benchmark:
         activation_delay = (
             result.activations[0].activation_delay if result.activations else np.nan
         )
@@ -243,6 +243,7 @@ def run_kinematic_validation(
                 "map": map_name,
                 "route": route_name,
                 "obstacle_kind": kind,
+                "disturbance_level": intensity,
                 "nominal_time_s": result.nominal_time,
                 "traversal_time_s": result.traversal_time,
                 "delay_s": result.delay,
@@ -387,6 +388,7 @@ def main() -> None:
             "four_way_intersection",
             "warehouse_grid",
         ],
+        "disturbance_levels": ["light", "medium", "heavy"],
         "obstacles": [
             "unexpected_stationary",
             "pedestrian_crossing",

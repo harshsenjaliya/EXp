@@ -184,7 +184,8 @@ The deterministic catalogue contains:
 Every route is checked against the robot's circumscribed footprint and safety
 margin.
 
-Five independently run obstruction classes are included:
+Five independently run obstruction classes are included at light, medium, and
+heavy duration levels:
 
 - unexpected stationary pallet;
 - pedestrian crossing;
