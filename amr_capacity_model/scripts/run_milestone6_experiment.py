@@ -22,7 +22,9 @@ if str(SRC) not in sys.path:
 
 from amr_capacity.branching_exposure import (
     bootstrap_censored_multitype_branching,
+    estimate_censored_multitype_branching,
     estimate_naive_observed_tree,
+    right_censor_branching_rollout,
     scale_branching_matrix,
     simulate_censored_branching_experiment,
 )
@@ -40,16 +42,19 @@ PROFILE = {
     "smoke": {
         "rollouts": 50,
         "bootstrap": 30,
+        "sensitivity_rollouts": 50,
         "dt": 0.05,
     },
     "quick": {
         "rollouts": 300,
         "bootstrap": 300,
+        "sensitivity_rollouts": 300,
         "dt": 0.025,
     },
     "paper": {
         "rollouts": 2_000,
         "bootstrap": 2_000,
+        "sensitivity_rollouts": 2_000,
         "dt": 0.01,
     },
 }
@@ -183,14 +188,152 @@ def run_branching_validation(
     return summary, entries
 
 
+def run_branching_sensitivity(
+    output: Path,
+    profile_name: str,
+) -> list[dict[str, object]]:
+    """Measure horizon convergence and known-kernel misspecification bias."""
+
+    settings = PROFILE[profile_name]
+    base = np.array([[0.25, 0.80], [0.10, 0.30]], dtype=float)
+    recovery = np.array([[1.0, 0.70], [0.90, 1.20]], dtype=float)
+    targets = (0.85, 1.15)
+    horizons = (0.5, 1.0, 2.0, 4.0)
+    recovery_multipliers = (0.50, 0.75, 1.00, 1.25, 1.50)
+    rows: list[dict[str, object]] = []
+
+    for target_index, target in enumerate(targets):
+        truth = scale_branching_matrix(base, target)
+        full_rollouts = simulate_censored_branching_experiment(
+            truth,
+            recovery,
+            rollout_count=int(settings["sensitivity_rollouts"]),
+            roots_per_rollout=3,
+            horizon=max(horizons),
+            population_cap=500,
+            root_type_probabilities=(0.55, 0.45),
+            seed=2026093600 + target_index,
+        )
+        for horizon in horizons:
+            observed = tuple(
+                right_censor_branching_rollout(rollout, horizon)
+                for rollout in full_rollouts
+            )
+            fitted = estimate_censored_multitype_branching(observed, recovery)
+            rows.append(
+                {
+                    "profile": profile_name,
+                    "sensitivity": "followup_horizon",
+                    "true_rho": target,
+                    "observation_horizon_s": horizon,
+                    "assumed_recovery_multiplier": 1.0,
+                    "estimated_rho": fitted.spectral_radius,
+                    "absolute_error": abs(fitted.spectral_radius - target),
+                    "classification_correct": (
+                        (fitted.spectral_radius > 1.0) == (target > 1.0)
+                    ),
+                    "rollouts": len(observed),
+                    "events": fitted.event_count,
+                    "temporally_censored_parents": (
+                        fitted.temporally_censored_parent_count
+                    ),
+                    "population_capped_rollouts": sum(
+                        item.population_cap_reached for item in observed
+                    ),
+                }
+            )
+
+        common_observation = tuple(
+            right_censor_branching_rollout(rollout, 2.0)
+            for rollout in full_rollouts
+        )
+        for multiplier in recovery_multipliers:
+            fitted = estimate_censored_multitype_branching(
+                common_observation, recovery * multiplier
+            )
+            rows.append(
+                {
+                    "profile": profile_name,
+                    "sensitivity": "recovery_rate",
+                    "true_rho": target,
+                    "observation_horizon_s": 2.0,
+                    "assumed_recovery_multiplier": multiplier,
+                    "estimated_rho": fitted.spectral_radius,
+                    "absolute_error": abs(fitted.spectral_radius - target),
+                    "classification_correct": (
+                        (fitted.spectral_radius > 1.0) == (target > 1.0)
+                    ),
+                    "rollouts": len(common_observation),
+                    "events": fitted.event_count,
+                    "temporally_censored_parents": (
+                        fitted.temporally_censored_parent_count
+                    ),
+                    "population_capped_rollouts": sum(
+                        item.population_cap_reached
+                        for item in common_observation
+                    ),
+                }
+            )
+
+    write_rows(output / "milestone6_branching_sensitivity.csv", rows)
+    figure, axes = plt.subplots(1, 2, figsize=(11.0, 4.5), constrained_layout=True)
+    for target in targets:
+        horizon_rows = [
+            row
+            for row in rows
+            if row["sensitivity"] == "followup_horizon"
+            and float(row["true_rho"]) == target
+        ]
+        rate_rows = [
+            row
+            for row in rows
+            if row["sensitivity"] == "recovery_rate"
+            and float(row["true_rho"]) == target
+        ]
+        axes[0].plot(
+            [float(row["observation_horizon_s"]) for row in horizon_rows],
+            [float(row["estimated_rho"]) for row in horizon_rows],
+            "o-",
+            label=f"truth {target:.2f}",
+        )
+        axes[1].plot(
+            [float(row["assumed_recovery_multiplier"]) for row in rate_rows],
+            [float(row["estimated_rho"]) for row in rate_rows],
+            "o-",
+            label=f"truth {target:.2f}",
+        )
+    for axis in axes:
+        axis.axhline(1.0, color="0.25", linestyle="--", linewidth=1.0)
+        axis.grid(alpha=0.2)
+        axis.legend(frameon=False)
+    axes[0].set(
+        xlabel="follow-up horizon (s)",
+        ylabel="estimated spectral radius",
+        title="Nested horizon sensitivity",
+    )
+    axes[1].set(
+        xlabel="assumed / true recovery rate",
+        ylabel="estimated spectral radius",
+        title="Recovery-kernel misspecification",
+    )
+    figure.savefig(output / "milestone6_branching_sensitivity.png", dpi=220)
+    plt.close(figure)
+    return rows
+
+
 def run_kinematic_validation(
     output: Path,
     profile_name: str,
-) -> tuple[list[dict[str, object]], list[dict[str, object]]]:
+) -> tuple[
+    list[dict[str, object]],
+    list[dict[str, object]],
+    list[dict[str, object]],
+]:
     settings = PROFILE[profile_name]
     platforms = standard_robot_catalogue()
     profile_rows: list[dict[str, object]] = []
     obstacle_rows: list[dict[str, object]] = []
+    convergence_rows: list[dict[str, object]] = []
     maps = standard_map_catalogue()
     for robot_name, limits in platforms:
         for map_spec in maps:
@@ -235,11 +378,60 @@ def run_kinematic_validation(
                     }
                 )
 
+        coarse_dt = float(settings["dt"])
         benchmark = run_cross_map_obstacle_benchmark(
             limits,
-            dt=float(settings["dt"]),
+            dt=coarse_dt,
             sensor_range=10.0,
         )
+        fine_benchmark = run_cross_map_obstacle_benchmark(
+            limits,
+            dt=0.5 * coarse_dt,
+            sensor_range=10.0,
+        )
+        for coarse, fine in zip(benchmark, fine_benchmark, strict=True):
+            coarse_key = coarse[:4]
+            fine_key = fine[:4]
+            if coarse_key != fine_key:
+                raise AssertionError("coarse/fine benchmark ordering changed")
+            map_name, route_name, kind, intensity = coarse_key
+            coarse_result = coarse[4]
+            fine_result = fine[4]
+            traversal_error = abs(
+                coarse_result.traversal_time - fine_result.traversal_time
+            )
+            loss_error = abs(
+                coarse_result.severity_weighted_loss
+                - fine_result.severity_weighted_loss
+            )
+            # A guarded hybrid rollout has at most activation, release, and
+            # completion quantization plus integration error. Six coarse
+            # steps is a conservative a-priori first-order resolution budget.
+            resolution_budget = 6.0 * coarse_dt
+            convergence_rows.append(
+                {
+                    "profile": profile_name,
+                    "robot_class": robot_name,
+                    "map": map_name,
+                    "route": route_name,
+                    "obstacle_kind": kind,
+                    "disturbance_level": intensity,
+                    "coarse_dt_s": coarse_dt,
+                    "fine_dt_s": 0.5 * coarse_dt,
+                    "coarse_traversal_time_s": coarse_result.traversal_time,
+                    "fine_traversal_time_s": fine_result.traversal_time,
+                    "absolute_traversal_time_error_s": traversal_error,
+                    "coarse_loss_s": coarse_result.severity_weighted_loss,
+                    "fine_loss_s": fine_result.severity_weighted_loss,
+                    "absolute_loss_error_s": loss_error,
+                    "resolution_budget_s": resolution_budget,
+                    "within_resolution_budget": (
+                        traversal_error <= resolution_budget + 1e-10
+                        and loss_error <= resolution_budget + 1e-10
+                    ),
+                }
+            )
+
         for map_name, route_name, kind, intensity, result in benchmark:
             activation_delay = (
                 result.activations[0].activation_delay
@@ -301,6 +493,7 @@ def run_kinematic_validation(
             )
     write_rows(output / "milestone6_kinematic_profiles.csv", profile_rows)
     write_rows(output / "milestone6_obstacle_benchmark.csv", obstacle_rows)
+    write_rows(output / "milestone6_step_convergence.csv", convergence_rows)
 
     figure, axes = plt.subplots(2, 3, figsize=(13.0, 8.0), constrained_layout=True)
     for axis, map_spec in zip(axes.flat, maps, strict=True):
@@ -356,7 +549,38 @@ def run_kinematic_validation(
     figure.colorbar(image, ax=axis, label="delay (s)")
     figure.savefig(output / "milestone6_obstacle_delay.png", dpi=220)
     plt.close(figure)
-    return profile_rows, obstacle_rows
+
+    figure, axes = plt.subplots(1, 2, figsize=(11.0, 4.5), constrained_layout=True)
+    coarse_time = np.array(
+        [
+            float(row["coarse_traversal_time_s"])
+            for row in convergence_rows
+        ]
+    )
+    fine_time = np.array(
+        [float(row["fine_traversal_time_s"]) for row in convergence_rows]
+    )
+    coarse_loss = np.array(
+        [float(row["coarse_loss_s"]) for row in convergence_rows]
+    )
+    fine_loss = np.array(
+        [float(row["fine_loss_s"]) for row in convergence_rows]
+    )
+    for axis, coarse, fine, label in (
+        (axes[0], coarse_time, fine_time, "traversal time (s)"),
+        (axes[1], coarse_loss, fine_loss, "severity-weighted loss (s)"),
+    ):
+        lower = float(min(np.min(coarse), np.min(fine)))
+        upper = float(max(np.max(coarse), np.max(fine)))
+        axis.plot([lower, upper], [lower, upper], "--", color="0.25")
+        axis.scatter(fine, coarse, s=12, alpha=0.55, color="#005a9c")
+        axis.set(xlabel=f"dt/2 {label}", ylabel=f"dt {label}")
+        axis.grid(alpha=0.2)
+    figure.suptitle("Fixed-step convergence across all route cases")
+    figure.savefig(output / "milestone6_step_convergence.png", dpi=220)
+    plt.close(figure)
+
+    return profile_rows, obstacle_rows, convergence_rows
 
 
 def main() -> None:
@@ -382,11 +606,13 @@ def main() -> None:
     output.mkdir(parents=True, exist_ok=True)
 
     branching_rows, _ = run_branching_validation(output, arguments.profile)
+    sensitivity_rows = run_branching_sensitivity(output, arguments.profile)
     if arguments.skip_obstacles:
         kinematic_rows: list[dict[str, object]] = []
         obstacle_rows: list[dict[str, object]] = []
+        convergence_rows: list[dict[str, object]] = []
     else:
-        kinematic_rows, obstacle_rows = run_kinematic_validation(
+        kinematic_rows, obstacle_rows, convergence_rows = run_kinematic_validation(
             output, arguments.profile
         )
 
@@ -421,8 +647,11 @@ def main() -> None:
             "occlusion_delayed_detection",
         ],
         "branching_rows": len(branching_rows),
+        "branching_sensitivity_rows": len(sensitivity_rows),
         "kinematic_rows": len(kinematic_rows),
         "obstacle_rows": len(obstacle_rows),
+        "step_convergence_rows": len(convergence_rows),
+        "step_convergence_budget": "absolute error <= 6 * coarse_dt",
         "hard_assertions": {
             "zero_static_collisions": all(
                 int(row["collision_count"]) == 0 for row in obstacle_rows
@@ -434,6 +663,10 @@ def main() -> None:
             "nonnegative_stopping_margin": all(
                 float(row["minimum_stopping_margin_m"]) >= -1e-7
                 for row in obstacle_rows
+            ),
+            "step_halving_converged": bool(convergence_rows) and all(
+                bool(row["within_resolution_budget"])
+                for row in convergence_rows
             ),
             "bounded_route_kinematics": all(
                 float(row["yaw_rate_utilization"]) <= 1.001
@@ -501,10 +734,65 @@ def main() -> None:
             default=None,
         ),
     }
+    recovery_rows = [
+        row for row in sensitivity_rows
+        if row["sensitivity"] == "recovery_rate"
+    ]
+    baseline_rows = [
+        row for row in recovery_rows
+        if float(row["assumed_recovery_multiplier"]) == 1.0
+    ]
+    horizon_ranges = []
+    for target in sorted({float(row["true_rho"]) for row in sensitivity_rows}):
+        values = [
+            float(row["estimated_rho"])
+            for row in sensitivity_rows
+            if row["sensitivity"] == "followup_horizon"
+            and float(row["true_rho"]) == target
+        ]
+        horizon_ranges.append(max(values) - min(values))
+    sensitivity_log = {
+        "rows": len(sensitivity_rows),
+        "maximum_correct_kernel_abs_error": max(
+            float(row["absolute_error"]) for row in baseline_rows
+        ),
+        "maximum_recovery_misspecification_abs_error": max(
+            float(row["absolute_error"]) for row in recovery_rows
+        ),
+        "maximum_horizon_estimate_range": max(horizon_ranges),
+    }
+    convergence_log = {
+        "rows": len(convergence_rows),
+        "all_within_resolution_budget": all(
+            bool(row["within_resolution_budget"]) for row in convergence_rows
+        ),
+        "maximum_traversal_time_error_s": max(
+            (
+                float(row["absolute_traversal_time_error_s"])
+                for row in convergence_rows
+            ),
+            default=None,
+        ),
+        "maximum_loss_error_s": max(
+            (float(row["absolute_loss_error_s"]) for row in convergence_rows),
+            default=None,
+        ),
+    }
     print(f"wrote Milestone 6 artifacts to {output}")
     print("BRANCHING_SUMMARY=" + json.dumps(branching_log, sort_keys=True))
+    print("SENSITIVITY_SUMMARY=" + json.dumps(sensitivity_log, sort_keys=True))
     print("OBSTACLE_SUMMARY=" + json.dumps(obstacle_log, sort_keys=True))
+    print("CONVERGENCE_SUMMARY=" + json.dumps(convergence_log, sort_keys=True))
     print("HARD_ASSERTIONS=" + json.dumps(manifest["hard_assertions"], sort_keys=True))
+    failures = [
+        name
+        for name, passed in manifest["hard_assertions"].items()
+        if not passed
+    ]
+    if failures:
+        raise AssertionError(
+            "Milestone 6 hard assertions failed: " + ", ".join(failures)
+        )
 
 
 if __name__ == "__main__":

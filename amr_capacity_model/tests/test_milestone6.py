@@ -12,6 +12,7 @@ from amr_capacity.branching_exposure import (
     estimate_naive_observed_tree,
     exponential_kernel_exposure,
     profile_log_likelihood,
+    right_censor_branching_rollout,
     scale_branching_matrix,
     simulate_censored_branching_experiment,
 )
@@ -142,6 +143,42 @@ class ExposureLikelihoodTests(unittest.TestCase):
             interval.spectral_radius_upper, interval.point.spectral_radius
         )
         self.assertGreater(interval.probability_supercritical, 0.70)
+
+
+
+    def test_right_censoring_returns_nested_valid_forests(self) -> None:
+        full = CensoredBranchingRollout(
+            events=(
+                TimedBranchingEvent(0, 0, 0.0, None, 0, 0),
+                TimedBranchingEvent(1, 1, 0.8, 0, 0, 1),
+                TimedBranchingEvent(2, 0, 1.6, 1, 0, 2),
+            ),
+            observation_end=2.0,
+            requested_horizon=2.0,
+        )
+        short = right_censor_branching_rollout(full, 1.0)
+        self.assertEqual([item.event_id for item in short.events], [0, 1])
+        self.assertEqual(short.observation_end, 1.0)
+        self.assertEqual(short.requested_horizon, 1.0)
+        self.assertFalse(short.population_cap_reached)
+
+    def test_recovery_rate_misspecification_has_expected_direction(self) -> None:
+        truth = np.array([[0.85]])
+        rates = np.array([[1.0]])
+        rollouts = simulate_censored_branching_experiment(
+            truth,
+            rates,
+            rollout_count=180,
+            roots_per_rollout=3,
+            horizon=2.0,
+            population_cap=300,
+            seed=2026091410,
+        )
+        slow = estimate_censored_multitype_branching(rollouts, 0.5 * rates)
+        correct = estimate_censored_multitype_branching(rollouts, rates)
+        fast = estimate_censored_multitype_branching(rollouts, 1.5 * rates)
+        self.assertGreater(slow.spectral_radius, correct.spectral_radius)
+        self.assertGreater(correct.spectral_radius, fast.spectral_radius)
 
 
 class KinematicMapTests(unittest.TestCase):

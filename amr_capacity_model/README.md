@@ -38,10 +38,12 @@ shield-coupled AMR fleet study. It implements:
 - spatially typed multi-type estimation with exact and LP \(G^\star\)
   cross-checks and an inherited-root-gate negative control;
 - exposure-aware censored multitype branching inference with rollout-cluster
-  bootstrap and known sub/supercritical synthetic validation;
+  bootstrap, nested-horizon checks, recovery-kernel sensitivity, and known
+  sub/supercritical synthetic validation;
 - differential-drive kinematic speed envelopes, C2 spline/Bezier routes, static
   footprint clearance, and guarded route-obstacle benchmarks across six maps,
-  three platform classes, and three disturbance levels.
+  three platform classes, three disturbance levels, and paired integration-step
+  convergence checks.
 
 The equations describe a research model.  They do not constitute an industrial
 safety certification or a protective-field design method.

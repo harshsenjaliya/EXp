@@ -107,6 +107,45 @@ class CensoredBranchingRollout:
                 raise ValueError("parent and child must belong to the same root tree")
 
 
+def right_censor_branching_rollout(
+    rollout: CensoredBranchingRollout,
+    observation_end: float,
+) -> CensoredBranchingRollout:
+    """Return the prefix observed at a requested observation end.
+
+    This supports paired horizon-sensitivity experiments: every horizon sees a
+    nested prefix of the same realized forest. A population cap that occurred
+    before the requested cutoff remains the actual chronological stopping rule.
+    """
+
+    cutoff = float(observation_end)
+    if (
+        not np.isfinite(cutoff)
+        or cutoff <= 0.0
+        or cutoff > rollout.requested_horizon + 1e-12
+    ):
+        raise ValueError(
+            "observation_end must lie in (0, rollout.requested_horizon]"
+        )
+    cap_precedes_cutoff = bool(
+        rollout.population_cap_reached
+        and rollout.observation_end <= cutoff + 1e-12
+    )
+    actual_end = rollout.observation_end if cap_precedes_cutoff else cutoff
+    events = tuple(
+        event
+        for event in rollout.events
+        if event.birth_time <= actual_end + 1e-12
+    )
+    return CensoredBranchingRollout(
+        events=events,
+        observation_end=float(actual_end),
+        requested_horizon=cutoff,
+        population_cap=rollout.population_cap,
+        population_cap_reached=cap_precedes_cutoff,
+    )
+
+
 @dataclass(frozen=True)
 class ExposureBranchingEstimate:
     """Sufficient statistics and fitted direct-offspring matrix."""

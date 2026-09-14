@@ -81,8 +81,9 @@ The synthetic theorem-level validation makes the assumptions explicit:
 - the population cap is an observed chronological stopping rule;
 - roots are exogenous.
 
-Recovery-rate misspecification, uncertain parent attribution, and interval
-censoring are separate ablations, not silently absorbed into this result.
+Recovery-rate misspecification is now an explicit paired sensitivity sweep on
+nested realized forests. Uncertain parent attribution and interval censoring
+remain separate ablations, not silently absorbed into this result.
 
 ### Uncertainty
 
@@ -207,7 +208,10 @@ cleared it. Unguarded unexpected obstacles fail closed if their requested
 activation violates the same contract. Every rollout records collision count,
 occupied-zone violation count, stopping margin, wheel speed, yaw rate, yaw
 acceleration, lateral acceleration, traversal delay, and severity-weighted
-loss.
+loss. Every one of the 360 platform-route-obstacle-level cases is repeated at
+half the integration step. Traversal time and severity loss must each differ by
+no more than six coarse steps, an a-priori budget for activation, release,
+completion, and first-order integration quantization.
 
 ## 4. Scope boundary
 
@@ -247,11 +251,15 @@ Generated files are:
 
 - milestone6_branching_validation.csv;
 - milestone6_branching_matrix_entries.csv;
+- milestone6_branching_sensitivity.csv;
 - milestone6_kinematic_profiles.csv;
 - milestone6_obstacle_benchmark.csv;
+- milestone6_step_convergence.csv;
 - milestone6_branching_recovery.png;
+- milestone6_branching_sensitivity.png;
 - milestone6_map_catalogue.png;
 - milestone6_obstacle_delay.png;
+- milestone6_step_convergence.png;
 - milestone6_manifest.json.
 
 ## 6. Acceptance criteria before a paper claim
@@ -260,9 +268,9 @@ The paper-profile run must satisfy all of the following:
 
 - exposure-aware bias and interval coverage are reported at every true radius;
 - supercritical classification is not inferred from the naive estimator;
-- results include recovery-rate and horizon sensitivity;
+- results include recovery-rate and nested-horizon sensitivity;
 - every kinematic rollout has zero collision and occupied-zone violations;
-- numerical results are stable under halving the integration step;
+- every route case passes the registered six-step integration-halving budget;
 - every limit is reported in physical units;
 - turning time is included in \(T_0\), never in \(g\);
 - the independent multi-robot capacity-boundary experiment remains a separate
