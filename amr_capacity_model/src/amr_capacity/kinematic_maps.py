@@ -18,6 +18,7 @@ from typing import Iterable, Sequence
 
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
+from scipy.interpolate import CubicSpline
 
 from .capacity_theory import d_stop, v_safe_next_step
 
@@ -368,6 +369,90 @@ def sample_bezier_route(
     )
 
 
+def sample_spline_route(
+    name: str,
+    waypoints: ArrayLike,
+    *,
+    maximum_spacing: float = 0.025,
+    minimum_samples: int = 240,
+) -> SampledPath:
+    """Interpolate waypoints with a natural C2 cubic parametric spline.
+
+    Curvature and its arc-length derivative are evaluated from analytic spline
+    derivatives.  This avoids the artificial curvature jumps produced by
+    merely tangent-continuous piecewise turn primitives.
+    """
+
+    points = np.asarray(waypoints, dtype=float)
+    if (
+        points.ndim != 2
+        or points.shape[1] != 2
+        or points.shape[0] < 4
+        or not np.all(np.isfinite(points))
+    ):
+        raise ValueError("waypoints must contain at least four finite 2D points")
+    chord = np.hypot(np.diff(points[:, 0]), np.diff(points[:, 1]))
+    if np.any(chord <= 1e-9):
+        raise ValueError("spline waypoints must be distinct")
+    if not np.isfinite(maximum_spacing) or maximum_spacing <= 0.0:
+        raise ValueError("maximum_spacing must be positive")
+    if minimum_samples < 20:
+        raise ValueError("minimum_samples must be at least 20")
+    parameter_at_waypoint = np.concatenate(([0.0], np.cumsum(chord)))
+    parameter_at_waypoint /= parameter_at_waypoint[-1]
+    x_spline = CubicSpline(
+        parameter_at_waypoint, points[:, 0], bc_type="natural"
+    )
+    y_spline = CubicSpline(
+        parameter_at_waypoint, points[:, 1], bc_type="natural"
+    )
+    sample_count = max(
+        minimum_samples,
+        int(np.ceil(np.sum(chord) / maximum_spacing)) + 1,
+    )
+    parameter = np.linspace(0.0, 1.0, sample_count)
+    x = x_spline(parameter)
+    y = y_spline(parameter)
+    first_x = x_spline(parameter, 1)
+    first_y = y_spline(parameter, 1)
+    second_x = x_spline(parameter, 2)
+    second_y = y_spline(parameter, 2)
+    third_x = x_spline(parameter, 3)
+    third_y = y_spline(parameter, 3)
+    parameter_speed_squared = first_x**2 + first_y**2
+    if np.any(parameter_speed_squared <= 1e-12):
+        raise ValueError("spline has a stationary parameterization point")
+    parameter_speed = np.sqrt(parameter_speed_squared)
+    numerator = first_x * second_y - first_y * second_x
+    curvature = numerator / parameter_speed_squared**1.5
+    numerator_derivative = first_x * third_y - first_y * third_x
+    speed_squared_derivative = 2.0 * (
+        first_x * second_x + first_y * second_y
+    )
+    curvature_parameter_derivative = (
+        numerator_derivative / parameter_speed_squared**1.5
+        - 1.5
+        * numerator
+        * speed_squared_derivative
+        / parameter_speed_squared**2.5
+    )
+    curvature_rate = curvature_parameter_derivative / parameter_speed
+    heading = np.unwrap(np.arctan2(first_y, first_x))
+    step = np.hypot(np.diff(x), np.diff(y))
+    if np.any(step <= 1e-10):
+        raise ValueError("spline sampling produced duplicate points")
+    arc = np.concatenate(([0.0], np.cumsum(step)))
+    return SampledPath(
+        name=name,
+        x=x,
+        y=y,
+        s=arc,
+        heading=heading,
+        curvature=curvature,
+        curvature_rate=curvature_rate,
+    )
+
+
 def straight_route(
     name: str = "straight",
     *,
@@ -392,67 +477,77 @@ def _map_straight() -> KinematicMap:
 
 
 def _map_l_turn() -> KinematicMap:
-    curve = np.array(
-        [[10.0, 0.0], [12.209, 0.0], [14.0, 1.791], [14.0, 4.0]]
-    )
-    route = sample_bezier_route(
+    route = sample_spline_route(
         "main",
         (
-            _line_segment((0.0, 0.0), (10.0, 0.0)),
-            curve,
-            _line_segment((14.0, 4.0), (14.0, 20.0)),
+            (0.0, 0.0),
+            (4.0, 0.0),
+            (8.0, 0.0),
+            (11.0, 0.35),
+            (13.2, 1.8),
+            (14.0, 4.0),
+            (14.0, 8.0),
+            (14.0, 14.0),
+            (14.0, 20.0),
         ),
-        samples_per_segment=90,
     )
     obstacles = (
-        CircularObstacle("inside_pillar", 10.8, 2.1, 0.42),
-        CircularObstacle("outside_pillar", 16.0, 3.2, 0.55),
+        CircularObstacle("inside_pillar", 10.2, 2.6, 0.42),
+        CircularObstacle("outside_pillar", 16.2, 3.2, 0.55),
     )
     return KinematicMap("l_turn", (route,), obstacles, speed_limit=1.6)
 
-
 def _map_s_curve() -> KinematicMap:
-    route = sample_bezier_route(
+    route = sample_spline_route(
         "main",
         (
-            _line_segment((0.0, 0.0), (5.0, 0.0)),
-            np.array([[5.0, 0.0], [9.0, 0.0], [11.0, 4.0], [15.0, 4.0]]),
-            np.array([[15.0, 4.0], [19.0, 4.0], [21.0, 0.0], [25.0, 0.0]]),
-            _line_segment((25.0, 0.0), (32.0, 0.0)),
+            (0.0, 0.0),
+            (4.0, 0.0),
+            (7.0, 0.3),
+            (10.0, 2.0),
+            (13.0, 3.7),
+            (16.0, 4.0),
+            (19.0, 3.7),
+            (22.0, 2.0),
+            (25.0, 0.3),
+            (28.0, 0.0),
+            (32.0, 0.0),
         ),
-        samples_per_segment=80,
     )
     obstacles = (
         CircularObstacle("chicane_north", 10.0, 5.4, 0.55),
-        CircularObstacle("chicane_south", 21.0, -1.5, 0.50),
+        CircularObstacle("chicane_south", 22.0, -1.5, 0.50),
     )
     return KinematicMap("s_curve", (route,), obstacles, speed_limit=1.7)
 
-
 def _map_merge() -> KinematicMap:
-    north = sample_bezier_route(
-        "north_in",
-        (
-            np.array([[0.0, 4.0], [6.0, 4.0], [8.0, 0.0], [14.0, 0.0]]),
-            _line_segment((14.0, 0.0), (32.0, 0.0)),
-        ),
-        samples_per_segment=110,
+    north_points = np.array(
+        [
+            (0.0, 4.0),
+            (5.0, 4.0),
+            (9.0, 3.0),
+            (12.0, 1.2),
+            (15.0, 0.25),
+            (19.0, 0.0),
+            (24.0, 0.0),
+            (28.0, 0.0),
+            (32.0, 0.0),
+        ]
     )
-    south = sample_bezier_route(
-        "south_in",
-        (
-            np.array([[0.0, -4.0], [6.0, -4.0], [8.0, 0.0], [14.0, 0.0]]),
-            _line_segment((14.0, 0.0), (32.0, 0.0)),
-        ),
-        samples_per_segment=110,
+    south_points = north_points.copy()
+    south_points[:, 1] *= -1.0
+    north = sample_spline_route("north_in", north_points)
+    south = sample_spline_route("south_in", south_points)
+    zone = ConflictZone(
+        "merge_reservation", 13.5, 0.0, 2.4, ("north_in", "south_in")
     )
-    zone = ConflictZone("merge_reservation", 12.0, 0.0, 2.1, ("north_in", "south_in"))
     obstacles = (
-        CircularObstacle("merge_island", 8.0, 5.5, 0.48),
-        CircularObstacle("merge_island_2", 8.0, -5.5, 0.48),
+        CircularObstacle("merge_island", 8.0, 5.8, 0.48),
+        CircularObstacle("merge_island_2", 8.0, -5.8, 0.48),
     )
-    return KinematicMap("two_to_one_merge", (north, south), obstacles, (zone,), 1.5)
-
+    return KinematicMap(
+        "two_to_one_merge", (north, south), obstacles, (zone,), 1.5
+    )
 
 def _map_intersection() -> KinematicMap:
     east = sample_bezier_route(
@@ -476,18 +571,25 @@ def _map_intersection() -> KinematicMap:
 
 
 def _map_warehouse_grid() -> KinematicMap:
-    route = sample_bezier_route(
+    route = sample_spline_route(
         "serpentine",
         (
-            _line_segment((0.0, 0.0), (12.0, 0.0)),
-            np.array([[12.0, 0.0], [14.2, 0.0], [16.0, 1.8], [16.0, 3.0]]),
-            np.array([[16.0, 3.0], [16.0, 4.2], [14.2, 6.0], [12.0, 6.0]]),
-            _line_segment((12.0, 6.0), (0.0, 6.0)),
-            np.array([[0.0, 6.0], [-2.2, 6.0], [-4.0, 7.8], [-4.0, 9.0]]),
-            np.array([[-4.0, 9.0], [-4.0, 10.2], [-2.2, 12.0], [0.0, 12.0]]),
-            _line_segment((0.0, 12.0), (16.0, 12.0)),
+            (0.0, 0.0),
+            (6.0, 0.0),
+            (12.0, 0.0),
+            (15.0, 1.0),
+            (16.0, 3.0),
+            (15.0, 5.0),
+            (12.0, 6.0),
+            (6.0, 6.0),
+            (0.0, 6.0),
+            (-3.0, 7.0),
+            (-4.0, 9.0),
+            (-3.0, 11.0),
+            (0.0, 12.0),
+            (8.0, 12.0),
+            (16.0, 12.0),
         ),
-        samples_per_segment=75,
     )
     obstacles = tuple(
         CircularObstacle(f"shelf_{index}", x, y, 1.15)
@@ -495,8 +597,9 @@ def _map_warehouse_grid() -> KinematicMap:
             ((3.0, 3.0), (7.0, 3.0), (11.0, 3.0), (3.0, 9.0), (8.0, 9.0))
         )
     )
-    return KinematicMap("warehouse_grid", (route,), obstacles, speed_limit=1.35)
-
+    return KinematicMap(
+        "warehouse_grid", (route,), obstacles, speed_limit=1.35
+    )
 
 def standard_map_catalogue() -> tuple[KinematicMap, ...]:
     """Six deterministic maps spanning turns, merges, conflicts, and aisles."""

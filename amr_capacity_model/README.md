@@ -39,7 +39,7 @@ shield-coupled AMR fleet study. It implements:
   cross-checks and an inherited-root-gate negative control;
 - exposure-aware censored multitype branching inference with rollout-cluster
   bootstrap and known sub/supercritical synthetic validation;
-- differential-drive kinematic speed envelopes, 2D Bezier routes, static
+- differential-drive kinematic speed envelopes, C2 spline/Bezier routes, static
   footprint clearance, and guarded route-obstacle benchmarks across six maps.
 
 The equations describe a research model.  They do not constitute an industrial

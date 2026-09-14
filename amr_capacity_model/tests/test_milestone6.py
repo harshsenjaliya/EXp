@@ -177,6 +177,9 @@ class KinematicMapTests(unittest.TestCase):
             map_speed_limit=l_turn.speed_limit,
         )
         self.assertGreater(profile.turning_penalty, 0.0)
+        self.assertLess(
+            np.max(np.abs(np.diff(l_turn.routes[0].curvature))), 0.08
+        )
         self.assertLessEqual(
             profile.max_abs_yaw_rate, self.limits.max_yaw_rate * 1.001
         )
