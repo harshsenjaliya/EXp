@@ -1197,9 +1197,23 @@ def simulate_route_obstacles(
         next_progress = min(path.length, progress + movement)
         if nearest is not None and next_progress > nearest.s - nearest.half_width + 1e-9:
             violation_count += 1
-        reference = float(np.interp(progress, path.s, profile.speed))
-        if reference > 1e-6:
-            severity += max(0.0, 1.0 - speed / reference) * dt
+        current_reference = float(
+            np.interp(progress, path.s, profile.speed)
+        )
+        next_reference = float(
+            np.interp(next_progress, path.s, profile.speed)
+        )
+        current_deficit = (
+            max(0.0, 1.0 - speed / current_reference)
+            if current_reference > 1e-6
+            else 0.0
+        )
+        next_deficit = (
+            max(0.0, 1.0 - next_speed / next_reference)
+            if next_reference > 1e-6
+            else 0.0
+        )
+        severity += 0.5 * (current_deficit + next_deficit) * dt
 
         progress = next_progress
         speed = next_speed
