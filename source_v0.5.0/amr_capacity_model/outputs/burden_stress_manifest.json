@@ -1,0 +1,381 @@
+{
+  "profile": "quick",
+  "seed": 20260914,
+  "settings": {
+    "levels": [
+      {
+        "name": "K01_base",
+        "crossings": 1,
+        "rate_per_crossing": 0.025
+      },
+      {
+        "name": "K02_dist",
+        "crossings": 2,
+        "rate_per_crossing": 0.05
+      },
+      {
+        "name": "K04_dist",
+        "crossings": 4,
+        "rate_per_crossing": 0.05
+      },
+      {
+        "name": "K08_dist",
+        "crossings": 8,
+        "rate_per_crossing": 0.05
+      },
+      {
+        "name": "K12_dist",
+        "crossings": 12,
+        "rate_per_crossing": 0.05
+      },
+      {
+        "name": "K16_dist",
+        "crossings": 16,
+        "rate_per_crossing": 0.05
+      },
+      {
+        "name": "K16_dense",
+        "crossings": 16,
+        "rate_per_crossing": 0.1
+      },
+      {
+        "name": "K16_midload",
+        "crossings": 16,
+        "rate_per_crossing": 0.05,
+        "arrival_rate": 0.35
+      },
+      {
+        "name": "K16_long",
+        "crossings": 16,
+        "rate_per_crossing": 0.025,
+        "arrival_rate": 0.2,
+        "crossing_duration": [
+          8.0,
+          12.0
+        ]
+      },
+      {
+        "name": "K16_extreme",
+        "crossings": 16,
+        "rate_per_crossing": 0.025,
+        "arrival_rate": 0.1,
+        "crossing_duration": [
+          8.0,
+          12.0
+        ]
+      }
+    ],
+    "duration": 300.0,
+    "followup": 60.0,
+    "replications": 6,
+    "arrival_rate": 0.8,
+    "crossing_duration": [
+      2.0,
+      4.0
+    ],
+    "bootstrap_resamples": 2000
+  },
+  "configs": {
+    "K01_base": {
+      "corridor_length": 30.0,
+      "desired_speed": 1.2,
+      "acceleration": 1.0,
+      "braking": 1.5,
+      "reaction_time": 0.2,
+      "dt": 0.05,
+      "robot_length": 0.8,
+      "safety_margin": 0.2,
+      "sensor_range": 8.0,
+      "crossing_x": 15.0,
+      "crossing_half_width": 0.4,
+      "admission_speed": 0.0,
+      "intervention_tolerance": 0.0001,
+      "collision_tolerance": 1e-09,
+      "fleet_size": null,
+      "empty_return_time": 0.0
+    },
+    "K02_dist": {
+      "corridor_length": 30.0,
+      "desired_speed": 1.2,
+      "acceleration": 1.0,
+      "braking": 1.5,
+      "reaction_time": 0.2,
+      "dt": 0.05,
+      "robot_length": 0.8,
+      "safety_margin": 0.2,
+      "sensor_range": 8.0,
+      "crossing_x": [
+        2.0,
+        28.0
+      ],
+      "crossing_half_width": 0.4,
+      "admission_speed": 0.0,
+      "intervention_tolerance": 0.0001,
+      "collision_tolerance": 1e-09,
+      "fleet_size": null,
+      "empty_return_time": 0.0
+    },
+    "K04_dist": {
+      "corridor_length": 30.0,
+      "desired_speed": 1.2,
+      "acceleration": 1.0,
+      "braking": 1.5,
+      "reaction_time": 0.2,
+      "dt": 0.05,
+      "robot_length": 0.8,
+      "safety_margin": 0.2,
+      "sensor_range": 8.0,
+      "crossing_x": [
+        2.0,
+        10.666666666666666,
+        19.333333333333332,
+        28.0
+      ],
+      "crossing_half_width": 0.4,
+      "admission_speed": 0.0,
+      "intervention_tolerance": 0.0001,
+      "collision_tolerance": 1e-09,
+      "fleet_size": null,
+      "empty_return_time": 0.0
+    },
+    "K08_dist": {
+      "corridor_length": 30.0,
+      "desired_speed": 1.2,
+      "acceleration": 1.0,
+      "braking": 1.5,
+      "reaction_time": 0.2,
+      "dt": 0.05,
+      "robot_length": 0.8,
+      "safety_margin": 0.2,
+      "sensor_range": 8.0,
+      "crossing_x": [
+        2.0,
+        5.714285714285714,
+        9.428571428571429,
+        13.142857142857142,
+        16.857142857142858,
+        20.571428571428573,
+        24.285714285714285,
+        28.0
+      ],
+      "crossing_half_width": 0.4,
+      "admission_speed": 0.0,
+      "intervention_tolerance": 0.0001,
+      "collision_tolerance": 1e-09,
+      "fleet_size": null,
+      "empty_return_time": 0.0
+    },
+    "K12_dist": {
+      "corridor_length": 30.0,
+      "desired_speed": 1.2,
+      "acceleration": 1.0,
+      "braking": 1.5,
+      "reaction_time": 0.2,
+      "dt": 0.05,
+      "robot_length": 0.8,
+      "safety_margin": 0.2,
+      "sensor_range": 8.0,
+      "crossing_x": [
+        2.0,
+        4.363636363636363,
+        6.7272727272727275,
+        9.090909090909092,
+        11.454545454545455,
+        13.818181818181818,
+        16.181818181818183,
+        18.545454545454547,
+        20.90909090909091,
+        23.272727272727273,
+        25.636363636363637,
+        28.0
+      ],
+      "crossing_half_width": 0.4,
+      "admission_speed": 0.0,
+      "intervention_tolerance": 0.0001,
+      "collision_tolerance": 1e-09,
+      "fleet_size": null,
+      "empty_return_time": 0.0
+    },
+    "K16_dist": {
+      "corridor_length": 30.0,
+      "desired_speed": 1.2,
+      "acceleration": 1.0,
+      "braking": 1.5,
+      "reaction_time": 0.2,
+      "dt": 0.05,
+      "robot_length": 0.8,
+      "safety_margin": 0.2,
+      "sensor_range": 8.0,
+      "crossing_x": [
+        2.0,
+        3.7333333333333334,
+        5.466666666666667,
+        7.2,
+        8.933333333333334,
+        10.666666666666668,
+        12.4,
+        14.133333333333333,
+        15.866666666666667,
+        17.6,
+        19.333333333333336,
+        21.066666666666666,
+        22.8,
+        24.533333333333335,
+        26.266666666666666,
+        28.0
+      ],
+      "crossing_half_width": 0.4,
+      "admission_speed": 0.0,
+      "intervention_tolerance": 0.0001,
+      "collision_tolerance": 1e-09,
+      "fleet_size": null,
+      "empty_return_time": 0.0
+    },
+    "K16_dense": {
+      "corridor_length": 30.0,
+      "desired_speed": 1.2,
+      "acceleration": 1.0,
+      "braking": 1.5,
+      "reaction_time": 0.2,
+      "dt": 0.05,
+      "robot_length": 0.8,
+      "safety_margin": 0.2,
+      "sensor_range": 8.0,
+      "crossing_x": [
+        2.0,
+        3.7333333333333334,
+        5.466666666666667,
+        7.2,
+        8.933333333333334,
+        10.666666666666668,
+        12.4,
+        14.133333333333333,
+        15.866666666666667,
+        17.6,
+        19.333333333333336,
+        21.066666666666666,
+        22.8,
+        24.533333333333335,
+        26.266666666666666,
+        28.0
+      ],
+      "crossing_half_width": 0.4,
+      "admission_speed": 0.0,
+      "intervention_tolerance": 0.0001,
+      "collision_tolerance": 1e-09,
+      "fleet_size": null,
+      "empty_return_time": 0.0
+    },
+    "K16_midload": {
+      "corridor_length": 30.0,
+      "desired_speed": 1.2,
+      "acceleration": 1.0,
+      "braking": 1.5,
+      "reaction_time": 0.2,
+      "dt": 0.05,
+      "robot_length": 0.8,
+      "safety_margin": 0.2,
+      "sensor_range": 8.0,
+      "crossing_x": [
+        2.0,
+        3.7333333333333334,
+        5.466666666666667,
+        7.2,
+        8.933333333333334,
+        10.666666666666668,
+        12.4,
+        14.133333333333333,
+        15.866666666666667,
+        17.6,
+        19.333333333333336,
+        21.066666666666666,
+        22.8,
+        24.533333333333335,
+        26.266666666666666,
+        28.0
+      ],
+      "crossing_half_width": 0.4,
+      "admission_speed": 0.0,
+      "intervention_tolerance": 0.0001,
+      "collision_tolerance": 1e-09,
+      "fleet_size": null,
+      "empty_return_time": 0.0
+    },
+    "K16_long": {
+      "corridor_length": 30.0,
+      "desired_speed": 1.2,
+      "acceleration": 1.0,
+      "braking": 1.5,
+      "reaction_time": 0.2,
+      "dt": 0.05,
+      "robot_length": 0.8,
+      "safety_margin": 0.2,
+      "sensor_range": 8.0,
+      "crossing_x": [
+        2.0,
+        3.7333333333333334,
+        5.466666666666667,
+        7.2,
+        8.933333333333334,
+        10.666666666666668,
+        12.4,
+        14.133333333333333,
+        15.866666666666667,
+        17.6,
+        19.333333333333336,
+        21.066666666666666,
+        22.8,
+        24.533333333333335,
+        26.266666666666666,
+        28.0
+      ],
+      "crossing_half_width": 0.4,
+      "admission_speed": 0.0,
+      "intervention_tolerance": 0.0001,
+      "collision_tolerance": 1e-09,
+      "fleet_size": null,
+      "empty_return_time": 0.0
+    },
+    "K16_extreme": {
+      "corridor_length": 30.0,
+      "desired_speed": 1.2,
+      "acceleration": 1.0,
+      "braking": 1.5,
+      "reaction_time": 0.2,
+      "dt": 0.05,
+      "robot_length": 0.8,
+      "safety_margin": 0.2,
+      "sensor_range": 8.0,
+      "crossing_x": [
+        2.0,
+        3.7333333333333334,
+        5.466666666666667,
+        7.2,
+        8.933333333333334,
+        10.666666666666668,
+        12.4,
+        14.133333333333333,
+        15.866666666666667,
+        17.6,
+        19.333333333333336,
+        21.066666666666666,
+        22.8,
+        24.533333333333335,
+        26.266666666666666,
+        28.0
+      ],
+      "crossing_half_width": 0.4,
+      "admission_speed": 0.0,
+      "intervention_tolerance": 0.0001,
+      "collision_tolerance": 1e-09,
+      "fleet_size": null,
+      "empty_return_time": 0.0
+    }
+  },
+  "interpretation": {
+    "coverage": "x in [0.1, 1] is the intended informative domain; reaching it does not by itself validate the saddle-node equation",
+    "gate_load": "per-crossing offered load stays below one; aggregate burden is not produced by an unstable single crossing-service queue",
+    "branching": "in-sample scalar resolvent agreement is flagged as an algebraic forest identity; only held-out transfer is scored",
+    "fold": "no fold is claimed unless a stable branch is independently observed to disappear under a quasi-static load protocol"
+  }
+}

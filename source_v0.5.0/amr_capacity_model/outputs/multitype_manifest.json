@@ -1,0 +1,84 @@
+{
+  "profile": "quick",
+  "seed": 20260914,
+  "settings": {
+    "arrival_rates": [
+      0.1,
+      0.2,
+      0.3,
+      0.4,
+      0.5,
+      0.6,
+      0.8
+    ],
+    "duration": 300.0,
+    "followup": 60.0,
+    "warmup_fraction": 0.3,
+    "replications": 6,
+    "crossing_count": 16,
+    "rate_per_crossing": 0.015,
+    "crossing_duration": [
+      2.0,
+      4.0
+    ],
+    "spatial_type_counts": [
+      4,
+      8,
+      16
+    ]
+  },
+  "config": {
+    "corridor_length": 30.0,
+    "desired_speed": 1.2,
+    "acceleration": 1.0,
+    "braking": 1.5,
+    "reaction_time": 0.2,
+    "dt": 0.05,
+    "robot_length": 0.8,
+    "safety_margin": 0.2,
+    "sensor_range": 8.0,
+    "crossing_x": [
+      2.0,
+      3.7333333333333334,
+      5.466666666666667,
+      7.2,
+      8.933333333333334,
+      10.666666666666668,
+      12.4,
+      14.133333333333333,
+      15.866666666666667,
+      17.6,
+      19.333333333333336,
+      21.066666666666666,
+      22.8,
+      24.533333333333335,
+      26.266666666666666,
+      28.0
+    ],
+    "crossing_half_width": 0.4,
+    "admission_speed": 0.0,
+    "intervention_tolerance": 0.0001,
+    "collision_tolerance": 1e-09,
+    "fleet_size": null,
+    "empty_return_time": 0.0
+  },
+  "findings": {
+    "supercritical_training_estimate_observed": false,
+    "rho_crossing_observed": false,
+    "maximum_spatial_non_normality_gap": 4.218879183758715,
+    "root_gate_control_is_diagonal": true,
+    "complete_forest_rho_bound_verified": true,
+    "training_primary_mix_rows_algebraic": 42,
+    "training_primary_mix_rows_total": 42,
+    "complete_primary_roots": 1144,
+    "fanout_parent_events": 6,
+    "maximum_direct_children": 2
+  },
+  "interpretation": {
+    "pooling": "event IDs are rollout-local; sufficient statistics are pooled without concatenating ID namespaces",
+    "cohorts": "roots are selected in a fixed window and their complete trees are retained; unresolved roots are excluded and counted",
+    "root_gate_control": "assigning every descendant its root gate makes B diagonal and cannot establish directed topology",
+    "finite_depth": "the truncation depth is the maximum generation in training only; it is not presented as a finite-fleet M_N validation",
+    "complete_tree_bound": "direct-edge conservation forces rho(B) <= 1 for the complete-tree MLE; supercritical inference requires censored exposure"
+  }
+}
