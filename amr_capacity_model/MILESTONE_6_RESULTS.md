@@ -10,10 +10,10 @@ the Milestone 5 audit:
    and therefore cannot separate turning limits from shield-induced burden.
 
 Version 0.6.0 adds a synthetic ground-truth validation layer for censored
-multitype branching and a separate 2D route-level kinematic benchmark. The code
-and tests are an implementation milestone. Paper-facing numerical claims must
-come from the preregistered paper profile and its committed output manifest, not
-from CI smoke data.
+multitype branching and a separate 2D route-level kinematic benchmark. The
+implementation milestone is complete and has a registered quick-profile result.
+Paper-facing numerical claims must still come from the preregistered paper
+profile and its committed output manifest, not from CI smoke or quick data.
 
 ## 1. Exposure-aware branching likelihood
 
@@ -225,7 +225,59 @@ but the paper profile must pass it before a fold-resolution claim. Severity
 loss itself is integrated with the trapezoidal rule over the fixed-step
 trajectory.
 
-## 4. Scope boundary
+
+## 4. Verified quick-profile result
+
+The registered quick profile completed on 2026-09-14 at commit
+b45014c1c8599bfdf79cac6402c577c6a634726b. The immutable workflow record is
+[Actions run 34879911615](https://github.com/harshsenjaliya/EXp/actions/runs/34879911615);
+its 12-file artifact has ID 10362252881 and SHA-256
+3f964dfe603e48f5b2596ac33310aa996c3643565ad55677d6db4142cb289200.
+
+| True rho | Exposure-aware estimate (95% cluster bootstrap) | Complete-tree ablation |
+| ---: | ---: | ---: |
+| 0.60 | 0.5916 [0.5457, 0.6310] | 0.4283 |
+| 0.85 | 0.9051 [0.8484, 0.9568] | 0.5957 |
+| 1.00 | 1.0307 [0.9851, 1.0827] | 0.6593 |
+| 1.15 | 1.1655 [1.1210, 1.2069] | 0.7068 |
+| 1.30 | 1.2960 [1.2462, 1.3390] | 0.7535 |
+
+The exposure-aware mean absolute error is 0.0227; the complete-tree ablation's
+is 0.3513. All five tested truths lie inside their intervals. This is five-point
+containment, not an interval-coverage-frequency estimate. The two subcritical
+cases have upper endpoints below one, the critical case is correctly
+indeterminate, and the two supercritical cases have lower endpoints above one.
+
+On paired nested forests, the maximum correctly specified recovery-kernel error
+is 0.0211 and the largest estimate range over 0.5--4.0 s follow-up horizons is
+0.0603. In contrast, recovery-rate misspecification over the registered
+0.5--1.5 multiplier sweep produces absolute error as large as 0.6002. Known or
+independently estimated recovery rates are therefore a substantive assumption,
+not a harmless implementation detail.
+
+The route benchmark contains 360 cases: three robot classes, eight routes, five
+obstacle mechanisms, and three levels. It spans
+\(x\in[0.00293,1.41624]\). All cases have zero static collisions, zero occupied
+route-zone violations, nonnegative stopping margin, and bounded kinematics.
+Maximum utilization is 0.6342 for yaw rate, 0.2904 for yaw acceleration, 1.0000
+for lateral acceleration, and 1.0000 for wheel speed.
+
+The two finest quick grids pass the registered direct-observable gates: maximum
+relative traversal-time change is 0.02285 and maximum absolute burden change is
+0.03743. They do not yet pass the separate fold-resolution check. Across the
+165 rows with \(x\ge0.1\), the maximum induced change in \(R_{\rm sn}\) is
+0.02353 against the registered 0.02 target. The worst case is the heavy-payload
+straight route with a medium unexpected stationary obstacle
+(\(x:0.13495\to0.10151\)). Three-grid aggregate traversal errors are also
+non-monotone. These facts are retained as limitations and must be resolved by
+the paper profile or by a better hybrid event integrator before a numerical
+fold-resolution claim.
+
+These quick results validate the software layers and the censoring repair. They
+remain synthetic branching evidence and single-robot route evidence; they are
+not an observed multi-robot capacity collapse.
+
+## 5. Scope boundary
 
 The kinematic benchmark follows one robot along one route at a time. Merge and
 intersection routes and their shared zones define geometry for the next
@@ -246,7 +298,7 @@ The paper claim becomes stronger only when the layers are connected:
 4. test whether the observed boundary obeys the fold curve using kinematic
    \(T_0(M,r)\) and severity-weighted \(g\).
 
-## 5. Reproducible execution
+## 6. Reproducible execution
 
 From the project directory:
 
@@ -274,7 +326,7 @@ Generated files are:
 - milestone6_step_convergence.png;
 - milestone6_manifest.json.
 
-## 6. Acceptance criteria before a paper claim
+## 7. Acceptance criteria before a paper claim
 
 The paper-profile run—not the lower-resolution CI smoke run—must satisfy all
 of the following:
