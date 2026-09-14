@@ -1,0 +1,43 @@
+name: Milestone 6 benchmark
+
+on:
+  push:
+    branches:
+      - milestone-6
+
+permissions:
+  contents: write
+
+jobs:
+  benchmark:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: source_v0.5.0/amr_capacity_model
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: source_v0.5.0/amr_capacity_model/pyproject.toml
+      - name: Install package
+        run: python -m pip install --upgrade pip && python -m pip install -e .
+      - name: Run known-law censoring benchmark
+        run: PYTHONPATH=src python scripts/run_censored_branching_experiment.py --profile quick
+      - name: Commit generated evidence
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add outputs/censored_branching_summary.csv
+          git add outputs/censored_branching_matrix_entries.csv
+          git add outputs/censored_branching_manifest.json
+          git add outputs/censored_branching_validation.png
+          if git diff --cached --quiet; then
+            echo "Generated evidence is unchanged."
+            exit 0
+          fi
+          git commit -m "results: generate Milestone 6 known-law benchmark"
+          git push
