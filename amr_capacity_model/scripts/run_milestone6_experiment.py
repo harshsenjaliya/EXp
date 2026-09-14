@@ -32,6 +32,7 @@ from amr_capacity.kinematic_maps import (
     plan_kinematic_speed_profile,
     run_cross_map_obstacle_benchmark,
     standard_map_catalogue,
+    standard_robot_catalogue,
 )
 
 
@@ -187,98 +188,118 @@ def run_kinematic_validation(
     profile_name: str,
 ) -> tuple[list[dict[str, object]], list[dict[str, object]]]:
     settings = PROFILE[profile_name]
-    limits = DifferentialDriveLimits()
+    platforms = standard_robot_catalogue()
     profile_rows: list[dict[str, object]] = []
+    obstacle_rows: list[dict[str, object]] = []
     maps = standard_map_catalogue()
-    for map_spec in maps:
-        clearance = assert_static_clearance(map_spec, limits)
-        for route in map_spec.routes:
-            planned = plan_kinematic_speed_profile(
-                route,
-                limits,
-                map_speed_limit=map_spec.speed_limit,
+    for robot_name, limits in platforms:
+        for map_spec in maps:
+            clearance = assert_static_clearance(map_spec, limits)
+            for route in map_spec.routes:
+                planned = plan_kinematic_speed_profile(
+                    route,
+                    limits,
+                    map_speed_limit=map_spec.speed_limit,
+                )
+                profile_rows.append(
+                    {
+                        "profile": profile_name,
+                        "robot_class": robot_name,
+                        "map": map_spec.name,
+                        "route": route.name,
+                        "route_length_m": route.length,
+                        "map_speed_limit_mps": map_spec.speed_limit,
+                        "nominal_time_s": planned.nominal_time,
+                        "straight_reference_time_s": (
+                            planned.straight_reference_time
+                        ),
+                        "turning_penalty_s": planned.turning_penalty,
+                        "turning_penalty_fraction": (
+                            planned.turning_penalty
+                            / planned.straight_reference_time
+                        ),
+                        "max_yaw_rate_rps": planned.max_abs_yaw_rate,
+                        "max_yaw_acceleration_rps2": (
+                            planned.max_abs_yaw_acceleration
+                        ),
+                        "max_lateral_acceleration_mps2": (
+                            planned.max_lateral_acceleration
+                        ),
+                        "max_wheel_speed_mps": planned.max_abs_wheel_speed,
+                        "envelope_binding_fraction": (
+                            planned.envelope_binding_fraction
+                        ),
+                        "minimum_static_clearance_m": clearance,
+                        "conflict_zones": len(map_spec.conflict_zones),
+                        "static_obstacles": len(map_spec.static_obstacles),
+                    }
+                )
+
+        benchmark = run_cross_map_obstacle_benchmark(
+            limits,
+            dt=float(settings["dt"]),
+            sensor_range=10.0,
+        )
+        for map_name, route_name, kind, intensity, result in benchmark:
+            activation_delay = (
+                result.activations[0].activation_delay
+                if result.activations
+                else np.nan
             )
-            profile_rows.append(
+            obstacle_rows.append(
                 {
                     "profile": profile_name,
-                    "map": map_spec.name,
-                    "route": route.name,
-                    "route_length_m": route.length,
-                    "map_speed_limit_mps": map_spec.speed_limit,
-                    "nominal_time_s": planned.nominal_time,
-                    "straight_reference_time_s": planned.straight_reference_time,
-                    "turning_penalty_s": planned.turning_penalty,
-                    "turning_penalty_fraction": (
-                        planned.turning_penalty / planned.straight_reference_time
+                    "robot_class": robot_name,
+                    "map": map_name,
+                    "route": route_name,
+                    "obstacle_kind": kind,
+                    "disturbance_level": intensity,
+                    "nominal_time_s": result.nominal_time,
+                    "traversal_time_s": result.traversal_time,
+                    "delay_s": result.delay,
+                    "severity_weighted_loss_s": (
+                        result.severity_weighted_loss
                     ),
-                    "max_yaw_rate_rps": planned.max_abs_yaw_rate,
-                    "max_yaw_acceleration_rps2": planned.max_abs_yaw_acceleration,
+                    "dimensionless_burden_x": (
+                        result.severity_weighted_loss / result.nominal_time
+                    ),
+                    "delay_fraction": result.delay / result.nominal_time,
+                    "activation_delay_s": activation_delay,
+                    "collision_count": result.collision_count,
+                    "obstacle_violation_count": (
+                        result.obstacle_violation_count
+                    ),
+                    "minimum_stopping_margin_m": (
+                        result.minimum_stopping_margin
+                    ),
+                    "minimum_static_clearance_m": (
+                        result.minimum_static_clearance
+                    ),
+                    "max_yaw_rate_rps": result.max_abs_yaw_rate,
+                    "max_yaw_acceleration_rps2": (
+                        result.max_abs_yaw_acceleration
+                    ),
                     "max_lateral_acceleration_mps2": (
-                        planned.max_lateral_acceleration
+                        result.max_lateral_acceleration
                     ),
-                    "max_wheel_speed_mps": planned.max_abs_wheel_speed,
-                    "envelope_binding_fraction": (
-                        planned.envelope_binding_fraction
+                    "max_wheel_speed_mps": result.max_abs_wheel_speed,
+                    "yaw_rate_utilization": (
+                        result.max_abs_yaw_rate / limits.max_yaw_rate
                     ),
-                    "minimum_static_clearance_m": clearance,
-                    "conflict_zones": len(map_spec.conflict_zones),
-                    "static_obstacles": len(map_spec.static_obstacles),
+                    "yaw_acceleration_utilization": (
+                        result.max_abs_yaw_acceleration
+                        / limits.max_yaw_acceleration
+                    ),
+                    "lateral_acceleration_utilization": (
+                        result.max_lateral_acceleration
+                        / limits.max_lateral_acceleration
+                    ),
+                    "wheel_speed_utilization": (
+                        result.max_abs_wheel_speed / limits.max_wheel_speed
+                    ),
                 }
             )
     write_rows(output / "milestone6_kinematic_profiles.csv", profile_rows)
-
-    benchmark = run_cross_map_obstacle_benchmark(
-        limits,
-        dt=float(settings["dt"]),
-        sensor_range=10.0,
-    )
-    obstacle_rows: list[dict[str, object]] = []
-    for map_name, route_name, kind, intensity, result in benchmark:
-        activation_delay = (
-            result.activations[0].activation_delay if result.activations else np.nan
-        )
-        obstacle_rows.append(
-            {
-                "profile": profile_name,
-                "map": map_name,
-                "route": route_name,
-                "obstacle_kind": kind,
-                "disturbance_level": intensity,
-                "nominal_time_s": result.nominal_time,
-                "traversal_time_s": result.traversal_time,
-                "delay_s": result.delay,
-                "severity_weighted_loss_s": result.severity_weighted_loss,
-                "dimensionless_burden_x": (
-                    result.severity_weighted_loss / result.nominal_time
-                ),
-                "delay_fraction": result.delay / result.nominal_time,
-                "activation_delay_s": activation_delay,
-                "collision_count": result.collision_count,
-                "obstacle_violation_count": result.obstacle_violation_count,
-                "minimum_stopping_margin_m": result.minimum_stopping_margin,
-                "minimum_static_clearance_m": result.minimum_static_clearance,
-                "max_yaw_rate_rps": result.max_abs_yaw_rate,
-                "max_yaw_acceleration_rps2": result.max_abs_yaw_acceleration,
-                "max_lateral_acceleration_mps2": (
-                    result.max_lateral_acceleration
-                ),
-                "max_wheel_speed_mps": result.max_abs_wheel_speed,
-                "yaw_rate_utilization": (
-                    result.max_abs_yaw_rate / limits.max_yaw_rate
-                ),
-                "yaw_acceleration_utilization": (
-                    result.max_abs_yaw_acceleration
-                    / limits.max_yaw_acceleration
-                ),
-                "lateral_acceleration_utilization": (
-                    result.max_lateral_acceleration
-                    / limits.max_lateral_acceleration
-                ),
-                "wheel_speed_utilization": (
-                    result.max_abs_wheel_speed / limits.max_wheel_speed
-                ),
-            }
-        )
     write_rows(output / "milestone6_obstacle_benchmark.csv", obstacle_rows)
 
     figure, axes = plt.subplots(2, 3, figsize=(13.0, 8.0), constrained_layout=True)
@@ -387,6 +408,9 @@ def main() -> None:
             "two_to_one_merge",
             "four_way_intersection",
             "warehouse_grid",
+        ],
+        "robot_classes": [
+            name for name, _ in standard_robot_catalogue()
         ],
         "disturbance_levels": ["light", "medium", "heavy"],
         "obstacles": [

@@ -24,6 +24,7 @@ from amr_capacity.kinematic_maps import (
     plan_kinematic_speed_profile,
     simulate_route_obstacles,
     standard_map_catalogue,
+    standard_robot_catalogue,
     straight_route,
 )
 
@@ -164,16 +165,24 @@ class KinematicMapTests(unittest.TestCase):
         self.assertGreaterEqual(
             sum(len(item.conflict_zones) for item in maps), 2
         )
-        for map_spec in maps:
-            self.assertGreaterEqual(assert_static_clearance(map_spec, self.limits), 0.0)
+        self.assertEqual(
+            {name for name, _ in standard_robot_catalogue()},
+            {"compact_agile", "standard", "heavy_payload"},
+        )
+        for _, limits in standard_robot_catalogue():
+            for map_spec in maps:
+                self.assertGreaterEqual(
+                    assert_static_clearance(map_spec, limits), 0.0
+                )
 
     def test_nominal_profile_respects_turn_and_wheel_envelopes(self) -> None:
         l_turn = next(
             item for item in standard_map_catalogue() if item.name == "l_turn"
         )
+        turn_limits = dict(standard_robot_catalogue())["heavy_payload"]
         profile = plan_kinematic_speed_profile(
             l_turn.routes[0],
-            self.limits,
+            turn_limits,
             map_speed_limit=l_turn.speed_limit,
         )
         self.assertGreater(profile.turning_penalty, 0.0)
@@ -181,18 +190,18 @@ class KinematicMapTests(unittest.TestCase):
             np.max(np.abs(np.diff(l_turn.routes[0].curvature))), 0.08
         )
         self.assertLessEqual(
-            profile.max_abs_yaw_rate, self.limits.max_yaw_rate * 1.001
+            profile.max_abs_yaw_rate, turn_limits.max_yaw_rate * 1.001
         )
         self.assertLessEqual(
             profile.max_lateral_acceleration,
-            self.limits.max_lateral_acceleration * 1.001,
+            turn_limits.max_lateral_acceleration * 1.001,
         )
         self.assertLessEqual(
-            profile.max_abs_wheel_speed, self.limits.max_wheel_speed * 1.001
+            profile.max_abs_wheel_speed, turn_limits.max_wheel_speed * 1.001
         )
         self.assertLessEqual(
             profile.max_abs_yaw_acceleration,
-            self.limits.max_yaw_acceleration * 1.15,
+            turn_limits.max_yaw_acceleration * 1.15,
         )
         self.assertTrue(np.all(profile.speed <= profile.curvature_envelope + 1e-9))
 

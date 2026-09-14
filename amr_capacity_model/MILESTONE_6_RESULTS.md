@@ -101,7 +101,9 @@ The old complete-tree estimator is retained as a named ablation.
 
 ## 2. Differential-drive kinematic formulation
 
-Each route is a sampled 2D centerline parameterized by arc length \(s\). The
+Each route is a curvature-continuous natural cubic spline sampled in arc
+length \(s\). Curvature and its spatial derivative are evaluated from
+analytic spline derivatives. The
 nominal unicycle kinematics are
 
 \[
@@ -182,10 +184,16 @@ The deterministic catalogue contains:
 | Warehouse grid | repeated aisle turns | 1 | static shelf field |
 
 Every route is checked against the robot's circumscribed footprint and safety
-margin.
+margin for three registered platform classes:
 
-Five independently run obstruction classes are included at light, medium, and
-heavy duration levels:
+| Platform | Role | Key effect |
+| --- | --- | --- |
+| Compact agile | small, high yaw/acceleration limits | geometry/map limit often binds |
+| Standard | reference AMR | mixed map and kinematic limitation |
+| Heavy payload | larger footprint, low lateral/yaw limits | turn envelope often binds |
+
+Each of the three robot classes runs five independent obstruction classes at
+light, medium, and heavy duration levels:
 
 - unexpected stationary pallet;
 - pedestrian crossing;

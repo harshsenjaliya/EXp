@@ -40,7 +40,8 @@ shield-coupled AMR fleet study. It implements:
 - exposure-aware censored multitype branching inference with rollout-cluster
   bootstrap and known sub/supercritical synthetic validation;
 - differential-drive kinematic speed envelopes, C2 spline/Bezier routes, static
-  footprint clearance, and guarded route-obstacle benchmarks across six maps.
+  footprint clearance, and guarded route-obstacle benchmarks across six maps,
+  three platform classes, and three disturbance levels.
 
 The equations describe a research model.  They do not constitute an industrial
 safety certification or a protective-field design method.

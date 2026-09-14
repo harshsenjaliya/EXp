@@ -79,6 +79,49 @@ class DifferentialDriveLimits:
         return 0.5 * self.length + self.safety_margin
 
 
+def standard_robot_catalogue(
+) -> tuple[tuple[str, DifferentialDriveLimits], ...]:
+    """Representative agile, standard, and heavy-payload AMR limits."""
+
+    return (
+        (
+            "compact_agile",
+            DifferentialDriveLimits(
+                max_speed=2.0,
+                max_acceleration=1.2,
+                max_deceleration=1.8,
+                max_yaw_rate=1.6,
+                max_yaw_acceleration=2.4,
+                max_lateral_acceleration=1.2,
+                max_wheel_speed=2.5,
+                wheel_track=0.44,
+                length=0.70,
+                width=0.50,
+                reaction_time=0.15,
+                safety_margin=0.15,
+            ),
+        ),
+        ("standard", DifferentialDriveLimits()),
+        (
+            "heavy_payload",
+            DifferentialDriveLimits(
+                max_speed=1.5,
+                max_acceleration=0.55,
+                max_deceleration=0.90,
+                max_yaw_rate=0.75,
+                max_yaw_acceleration=1.0,
+                max_lateral_acceleration=0.45,
+                max_wheel_speed=1.6,
+                wheel_track=0.68,
+                length=1.20,
+                width=0.80,
+                reaction_time=0.28,
+                safety_margin=0.22,
+            ),
+        ),
+    )
+
+
 @dataclass(frozen=True)
 class SampledPath:
     """A smooth centerline sampled monotonically in arc length."""

@@ -275,6 +275,7 @@ from .kinematic_maps import (
     simulate_route_obstacles,
     standard_map_catalogue,
     standard_obstacle_suite,
+    standard_robot_catalogue,
     straight_route,
 )
 
@@ -312,5 +313,6 @@ __all__ += [
     "simulate_route_obstacles",
     "standard_map_catalogue",
     "standard_obstacle_suite",
+    "standard_robot_catalogue",
     "straight_route",
 ]
