@@ -213,10 +213,13 @@ time grids, \(\Delta t\), \(\Delta t/2\), and \(\Delta t/4\). Guarded activation
 makes individual hybrid trajectories nonsmooth at switching surfaces, so
 monotone Richardson convergence is not assumed. Grid independence is instead
 registered on the two finest grids for the observables used by the paper:
-relative traversal-time error at most 3%, absolute burden error
-\(|\Delta x|\le0.05\), and induced fold-curve error
-\(|\Delta R_{\rm sn}|\le0.02\). Three-grid means, 95th percentiles, maxima, and
-worst-case identifiers remain reported rather than hidden.
+relative traversal-time error at most 3% and absolute burden error
+\(|\Delta x|\le0.05\) across every row. The induced fold-curve tolerance
+\(|\Delta R_{\rm sn}|\le0.02\) is enforced only on the informative domain
+\(x\ge0.05\), because \(dR_{\rm sn}/dx\) is singular at zero. Low-burden fold
+errors, three-grid means, 95th percentiles, maxima, and worst-case identifiers
+remain reported rather than hidden. Severity loss itself is integrated with the
+trapezoidal rule over the fixed-step trajectory.
 
 ## 4. Scope boundary
 
@@ -275,7 +278,8 @@ The paper-profile run must satisfy all of the following:
 - supercritical classification is not inferred from the naive estimator;
 - results include recovery-rate and nested-horizon sensitivity;
 - every kinematic rollout has zero collision and occupied-zone violations;
-- every route case passes the registered finest-grid observable tolerances;
+- every route case passes the registered finest-grid time/burden tolerances
+  and every informative-burden row passes the fold-diagnostic tolerance;
 - every limit is reported in physical units;
 - turning time is included in \(T_0\), never in \(g\);
 - the independent multi-robot capacity-boundary experiment remains a separate
