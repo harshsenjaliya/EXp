@@ -28,6 +28,7 @@ from amr_capacity.branching_exposure import (
     scale_branching_matrix,
     simulate_censored_branching_experiment,
 )
+from amr_capacity.capacity_theory import r_saddle_node_from_burden
 from amr_capacity.kinematic_maps import (
     DifferentialDriveLimits,
     assert_static_clearance,
@@ -406,6 +407,18 @@ def run_kinematic_validation(
             coarse_result = coarse[4]
             fine_result = fine[4]
             finer_result = finer[4]
+            nominal_time = finer_result.nominal_time
+            coarse_x = coarse_result.severity_weighted_loss / nominal_time
+            fine_x = fine_result.severity_weighted_loss / nominal_time
+            finer_x = finer_result.severity_weighted_loss / nominal_time
+            fine_finer_relative_time_error = abs(
+                fine_result.traversal_time - finer_result.traversal_time
+            ) / max(finer_result.traversal_time, 1e-12)
+            fine_finer_x_error = abs(fine_x - finer_x)
+            fine_finer_fold_error = abs(
+                r_saddle_node_from_burden(fine_x)
+                - r_saddle_node_from_burden(finer_x)
+            )
             convergence_rows.append(
                 {
                     "profile": profile_name,
@@ -428,6 +441,9 @@ def run_kinematic_validation(
                         fine_result.traversal_time
                         - finer_result.traversal_time
                     ),
+                    "fine_finer_relative_traversal_error": (
+                        fine_finer_relative_time_error
+                    ),
                     "coarse_loss_s": coarse_result.severity_weighted_loss,
                     "fine_loss_s": fine_result.severity_weighted_loss,
                     "finer_loss_s": finer_result.severity_weighted_loss,
@@ -438,6 +454,16 @@ def run_kinematic_validation(
                     "fine_finer_loss_error_s": abs(
                         fine_result.severity_weighted_loss
                         - finer_result.severity_weighted_loss
+                    ),
+                    "coarse_burden_x": coarse_x,
+                    "fine_burden_x": fine_x,
+                    "finer_burden_x": finer_x,
+                    "fine_finer_burden_x_error": fine_finer_x_error,
+                    "fine_finer_fold_r_error": fine_finer_fold_error,
+                    "finest_grid_independent": (
+                        fine_finer_relative_time_error <= 0.03
+                        and fine_finer_x_error <= 0.05
+                        and fine_finer_fold_error <= 0.02
                     ),
                 }
             )
@@ -648,7 +674,38 @@ def step_convergence_summary(
                 ),
             }
         )
-    result["aggregate_converged"] = aggregate
+    relative_time = np.array(
+        [
+            float(row["fine_finer_relative_traversal_error"])
+            for row in rows
+        ]
+    )
+    burden_x = np.array(
+        [float(row["fine_finer_burden_x_error"]) for row in rows]
+    )
+    fold_r = np.array(
+        [float(row["fine_finer_fold_r_error"]) for row in rows]
+    )
+    result.update(
+        {
+            "aggregate_error_decreased": aggregate,
+            "maximum_finest_relative_traversal_error": float(
+                np.max(relative_time)
+            ),
+            "maximum_finest_burden_x_error": float(np.max(burden_x)),
+            "maximum_finest_fold_r_error": float(np.max(fold_r)),
+            "finest_grid_independent": bool(
+                np.all(relative_time <= 0.03)
+                and np.all(burden_x <= 0.05)
+                and np.all(fold_r <= 0.02)
+            ),
+            "acceptance_thresholds": {
+                "relative_traversal_time": 0.03,
+                "absolute_burden_x": 0.05,
+                "absolute_fold_r": 0.02,
+            },
+        }
+    )
     return result
 
 
@@ -721,8 +778,9 @@ def main() -> None:
         "obstacle_rows": len(obstacle_rows),
         "step_convergence_rows": len(convergence_rows),
         "step_convergence_rule": (
-            "mean and 95th-percentile dt/2-to-dt/4 errors do not exceed "
-            "the corresponding dt-to-dt/2 errors"
+            "on the two finest grids: relative traversal error <= 0.03, "
+            "absolute burden-x error <= 0.05, and absolute induced "
+            "R_sn error <= 0.02; three-grid error trends remain diagnostic"
         ),
         "hard_assertions": {
             "zero_static_collisions": all(
@@ -736,9 +794,9 @@ def main() -> None:
                 float(row["minimum_stopping_margin_m"]) >= -1e-7
                 for row in obstacle_rows
             ),
-            "step_halving_converged": bool(
+            "finest_grid_independent": bool(
                 step_convergence_summary(convergence_rows)[
-                    "aggregate_converged"
+                    "finest_grid_independent"
                 ]
             ),
             "bounded_route_kinematics": all(
