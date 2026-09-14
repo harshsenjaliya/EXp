@@ -953,11 +953,15 @@ def simulate_route_obstacles(
                     )
                 )
 
+        # Actuator reachability is a one-step property.  Curvature beyond the
+        # next integration segment belongs to the future speed envelope; using
+        # the whole sensor horizon here can incorrectly let a turn beyond the
+        # obstruction reduce the braking available at the current pose.
         local_braking = _local_braking_limit(
             path,
             limits,
             progress,
-            min(path.length, progress + max(sensor_range, speed * dt)),
+            min(path.length, progress + max(speed * dt, path.s[1])),
             yaw_acceleration_split,
         )
         reachable_floor = max(0.0, speed - local_braking * dt)
@@ -965,8 +969,11 @@ def simulate_route_obstacles(
         requested_speed = min(nominal_cap, reachable_ceiling, safety_cap)
         if requested_speed < reachable_floor - 2e-8:
             if safety_cap < reachable_floor - 2e-8:
+                obstacle_name = "none" if nearest is None else nearest.obstacle_id
                 raise UnsafeObstacleActivationError(
-                    "the shield requested deceleration beyond the guaranteed limit"
+                    "the shield requested deceleration beyond the guaranteed "
+                    f"limit on path={path.name}, obstacle={obstacle_name}, "
+                    f"time={time:.6f}, s={progress:.6f}"
                 )
             next_speed = reachable_floor
         else:
