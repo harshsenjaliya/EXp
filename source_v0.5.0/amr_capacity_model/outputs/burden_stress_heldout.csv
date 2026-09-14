@@ -1,0 +1,11 @@
+condition,crossing_count,rate_per_crossing_per_s,arrival_rate_per_s,training_replications,validation_replications,direct_branching_training,predicted_progeny_training,measured_progeny_held_out,held_out_relative_error,validation_primary_events,validation_causal_events,validation_scope,supercriticality_identifiable
+K01_base,1,0.025,0.8,3,3,0.9148936170212766,11.749999999999998,12.0,0.02083333333333348,3,36,independent_chain_length_transfer_only,False
+K02_dist,2,0.05,0.8,3,3,0.8628571428571429,7.291666666666668,8.413793103448276,0.13336748633879766,29,244,independent_chain_length_transfer_only,False
+K04_dist,4,0.05,0.8,3,3,0.8977556109725686,9.780487804878053,7.132075471698113,0.37133823719189635,53,378,independent_chain_length_transfer_only,False
+K08_dist,8,0.05,0.8,3,3,0.8378870673952641,6.168539325842695,5.239130434782608,0.17739754767121987,92,482,independent_chain_length_transfer_only,False
+K12_dist,12,0.05,0.8,3,3,0.7730829420970265,4.406896551724137,5.173076923076923,0.14810921676708133,156,807,independent_chain_length_transfer_only,False
+K16_dist,16,0.05,0.8,3,3,0.707635009310987,3.420382165605096,3.3179190751445087,0.03088173283916653,173,574,independent_chain_length_transfer_only,False
+K16_dense,16,0.1,0.8,3,3,0.5,2.0,2.125,0.058823529411764705,160,340,independent_chain_length_transfer_only,False
+K16_midload,16,0.05,0.35,3,3,0.7276051188299817,3.671140939597315,2.9019607843137254,0.26505532378015584,153,444,independent_chain_length_transfer_only,False
+K16_long,16,0.025,0.2,3,3,0.7465753424657534,3.9459459459459456,3.4262295081967213,0.15168757274020422,61,209,independent_chain_length_transfer_only,False
+K16_extreme,16,0.025,0.1,3,3,0.6941176470588235,3.269230769230769,2.9482758620689653,0.1088618983355826,58,171,independent_chain_length_transfer_only,False

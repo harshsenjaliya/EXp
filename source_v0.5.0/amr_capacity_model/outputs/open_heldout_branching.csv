@@ -1,0 +1,7 @@
+requested_arrival_rate,training_replications,validation_replications,direct_branching_training,predicted_progeny_training,measured_progeny_held_out,held_out_relative_error,validation_primary_events,validation_causal_events,validation_scope,supercriticality_identifiable,indeterminate_reason
+0.35,1,2,,,,,,,indeterminate,False,training rollouts contain no completed primary events
+0.5,1,2,,,,,,,indeterminate,False,training rollouts contain no completed primary events
+0.6,1,2,,,,,,,indeterminate,False,training rollouts contain no completed primary events
+0.65,1,2,,,,,,,indeterminate,False,training rollouts contain no completed primary events
+0.7,1,2,,,,,,,indeterminate,False,training rollouts contain no completed primary events
+0.8,1,2,,,,,,,indeterminate,False,training rollouts contain no completed primary events
