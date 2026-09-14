@@ -911,7 +911,12 @@ def simulate_route_obstacles(
                 nearest = obstacle
                 nearest_distance = entry - progress
 
-        target_s = min(path.length, progress + max(speed, 0.15) * dt)
+        # Track the arc-speed cap at the current position.  Looking all the
+        # way to the zero-speed endpoint can command zero while the center is
+        # still one substep short and produce an artificial asymptotic stall.
+        # Only the exact initial state looks one path sample ahead so that a
+        # zero start-speed boundary can accelerate.
+        target_s = path.s[1] if progress <= 1e-12 else progress
         nominal_cap = float(np.interp(target_s, path.s, profile.speed))
         safety_cap = float("inf")
         braking_floor = limits.max_deceleration
