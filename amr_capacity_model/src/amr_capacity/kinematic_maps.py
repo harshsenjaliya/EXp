@@ -586,7 +586,16 @@ def curvature_speed_envelope(
     envelope[changing] = np.minimum(
         envelope[changing], np.sqrt(curvature_rate_budget / abs_rate[changing])
     )
-    return np.maximum(envelope, 0.0)
+
+    # The cap is nonlinear in curvature.  Linear interpolation of endpoint
+    # caps can therefore exceed the exact cap between samples.  Assign both
+    # endpoints the minimum cap of each adjacent segment; this makes the
+    # piecewise-linear speed envelope an inner approximation on every segment.
+    segment_cap = np.minimum(envelope[:-1], envelope[1:])
+    conservative = envelope.copy()
+    conservative[:-1] = np.minimum(conservative[:-1], segment_cap)
+    conservative[1:] = np.minimum(conservative[1:], segment_cap)
+    return np.maximum(conservative, 0.0)
 
 
 def _pointwise_kinematic_cap(
