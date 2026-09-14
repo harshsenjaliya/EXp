@@ -37,6 +37,12 @@ shield-coupled AMR fleet study. It implements:
   identification;
 - spatially typed multi-type estimation with exact and LP \(G^\star\)
   cross-checks and an inherited-root-gate negative control.
+- fixed-window observed-root cohorts that retain unresolved trees;
+- an exposure-aware continuous-time branching likelihood for administrative
+  right censoring;
+- whole-forest bootstrap intervals that preserve causal dependence;
+- a known-law censored branching generator covering subcritical, non-normal,
+  and supercritical matrices.
 
 The equations describe a research model.  They do not constitute an industrial
 safety certification or a protective-field design method.
@@ -57,6 +63,9 @@ publication claim boundary.
 See [`MILESTONE_5_RESULTS.md`](MILESTONE_5_RESULTS.md) for the finite-estimator
 benchmark, duplicate-ID forensic audit, generalized multi-type identity, and
 corrected non-normality experiment.
+See [`CENSORED_BRANCHING_SPEC.md`](CENSORED_BRANCHING_SPEC.md) for the
+exposure/recovery likelihood, cohort rule, identifiability gate, and claim
+boundary introduced for Milestone 6.
 
 ## Run the validation suite
 
@@ -132,6 +141,17 @@ root-gate inheritance only as a diagonal negative control. The generated quick
 profile finds subcritical but non-normal amplification; it does not establish a
 supercritical transition. Use `--profile paper` for the longer replicated
 experiment.
+
+## Run the Milestone 6 censoring benchmark
+
+```bash
+PYTHONPATH=src python scripts/run_censored_branching_experiment.py --profile quick
+```
+
+This generates known-law scalar and multitype forests under a fixed observation
+horizon, compares the exposure-aware likelihood with complete-tree selection,
+and writes bootstrap intervals and machine-readable acceptance checks. The
+paper profile increases the independent-root count and bootstrap resamples.
 
 After generating the experiments, run the fail-closed claim ledger:
 

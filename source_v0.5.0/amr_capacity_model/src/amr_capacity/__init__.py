@@ -1,6 +1,15 @@
 """Shield-coupled AMR fleet-capacity reference package."""
 
 from .geometry import RectangularLoop
+from .censored_branching import (
+    ExposureAwareBranchingBootstrap,
+    ExposureAwareBranchingEstimate,
+    ObservedRootCohortSelection,
+    bootstrap_exposure_aware_branching,
+    estimate_exposure_aware_branching,
+    pool_exposure_aware_branching_events,
+    select_observed_root_cohorts,
+)
 from .simulation import (
     BlockerKind,
     CorridorConfig,
@@ -43,6 +52,7 @@ from .estimation import (
     validate_finite_chain_event_sets,
     validate_finite_chain_out_of_sample,
 )
+from .synthetic import simulate_censored_branching_forests
 from .open_system import (
     CompletedTraversal,
     CrossingRequest,
@@ -138,6 +148,8 @@ __all__ = [
     "CrossingRequest",
     "CrossingServiceRecord",
     "CrossingEvent",
+    "ExposureAwareBranchingBootstrap",
+    "ExposureAwareBranchingEstimate",
     "FleetState",
     "FiniteChainEstimate",
     "FiniteChainValidation",
@@ -151,6 +163,7 @@ __all__ = [
     "OpenPairedRolloutResult",
     "OpenSimulationResult",
     "OpenTrajectoryLog",
+    "ObservedRootCohortSelection",
     "OperatingWindowMetrics",
     "PairedRolloutResult",
     "RectangularLoop",
@@ -167,6 +180,7 @@ __all__ = [
     "TrajectoryLog",
     "UnsafeCrossingScheduleError",
     "buffer_loss_speed",
+    "bootstrap_exposure_aware_branching",
     "analyze_arrival_cohort",
     "analyze_load_segments",
     "analyze_operating_window",
@@ -187,6 +201,7 @@ __all__ = [
     "diagnose_multitype_forest_identity",
     "empirical_capacity_bracket",
     "estimate_direct_branching",
+    "estimate_exposure_aware_branching",
     "estimate_finite_chain_propagation",
     "estimate_horizon_branching",
     "estimate_queue_drift",
@@ -209,6 +224,7 @@ __all__ = [
     "queue_regeneration_diagnostics",
     "pool_direct_branching",
     "pool_direct_branching_events",
+    "pool_exposure_aware_branching_events",
     "pool_horizon_branching",
     "reproduction_number",
     "retype_events_by_minimum_speed",
@@ -219,8 +235,10 @@ __all__ = [
     "run_open_paired_rollout",
     "scalar_equilibria",
     "select_complete_root_cohorts",
+    "select_observed_root_cohorts",
     "spectral_radius",
     "simulate_corridor",
+    "simulate_censored_branching_forests",
     "simulate_open_corridor",
     "summarize_open_counterfactual",
     "summarize_rate_replications",
