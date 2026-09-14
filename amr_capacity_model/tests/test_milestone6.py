@@ -230,6 +230,20 @@ class KinematicMapTests(unittest.TestCase):
         self.assertGreater(result.delay, 1.0)
         self.assertGreater(result.severity_weighted_loss, 0.0)
         self.assertGreaterEqual(result.minimum_stopping_margin, -1e-7)
+        self.assertLessEqual(
+            result.max_abs_yaw_rate, self.limits.max_yaw_rate * 1.001
+        )
+        self.assertLessEqual(
+            result.max_lateral_acceleration,
+            self.limits.max_lateral_acceleration * 1.001,
+        )
+        self.assertLessEqual(
+            result.max_abs_wheel_speed, self.limits.max_wheel_speed * 1.001
+        )
+        self.assertLessEqual(
+            result.max_abs_yaw_acceleration,
+            self.limits.max_yaw_acceleration * 1.02,
+        )
         self.assertEqual(len(result.activations), 1)
 
     def test_unsafe_unguarded_activation_fails_closed(self) -> None:

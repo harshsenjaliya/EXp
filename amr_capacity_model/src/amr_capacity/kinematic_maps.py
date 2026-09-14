@@ -589,6 +589,40 @@ def curvature_speed_envelope(
     return np.maximum(envelope, 0.0)
 
 
+def _pointwise_kinematic_cap(
+    path: SampledPath,
+    progress: float,
+    limits: DifferentialDriveLimits,
+    map_speed_limit: float,
+    yaw_acceleration_split: float,
+) -> float:
+    """Exact geometric speed cap at one interpolated future pose."""
+
+    curvature = abs(float(np.interp(progress, path.s, path.curvature)))
+    curvature_rate = abs(
+        float(np.interp(progress, path.s, path.curvature_rate))
+    )
+    cap = min(limits.max_speed, limits.max_wheel_speed, map_speed_limit)
+    if curvature > 1e-12:
+        cap = min(
+            cap,
+            limits.max_yaw_rate / curvature,
+            np.sqrt(limits.max_lateral_acceleration / curvature),
+            limits.max_wheel_speed
+            / (1.0 + 0.5 * limits.wheel_track * curvature),
+        )
+    if curvature_rate > 1e-12:
+        cap = min(
+            cap,
+            np.sqrt(
+                (1.0 - yaw_acceleration_split)
+                * limits.max_yaw_acceleration
+                / curvature_rate
+            ),
+        )
+    return float(max(0.0, cap))
+
+
 def _segment_tangential_limits(
     path: SampledPath,
     limits: DifferentialDriveLimits,
@@ -980,6 +1014,30 @@ def simulate_route_obstacles(
         else:
             next_speed = max(0.0, requested_speed)
 
+        # Enforce the geometric envelope at the pose reached by this step.
+        # The predicted pose depends on next_speed, so a short fixed-point loop
+        # removes interpolation overshoot without weakening actuator limits.
+        for _ in range(5):
+            predicted_progress = min(
+                path.length, progress + 0.5 * (speed + next_speed) * dt
+            )
+            geometric_cap = _pointwise_kinematic_cap(
+                path,
+                predicted_progress,
+                limits,
+                map_spec.speed_limit,
+                yaw_acceleration_split,
+            )
+            capped_speed = min(next_speed, geometric_cap)
+            if capped_speed < reachable_floor - 2e-8:
+                raise UnsafeObstacleActivationError(
+                    "the future kinematic envelope is unreachable on "
+                    f"path={path.name}, time={time:.6f}, s={progress:.6f}"
+                )
+            if abs(capped_speed - next_speed) <= 1e-12:
+                break
+            next_speed = capped_speed
+
         movement = 0.5 * (speed + next_speed) * dt
         next_progress = min(path.length, progress + movement)
         if nearest is not None and next_progress > nearest.s - nearest.half_width + 1e-9:
@@ -1159,9 +1217,17 @@ def run_cross_map_obstacle_benchmark(
                     result.collision_count != 0
                     or result.obstacle_violation_count != 0
                     or result.minimum_stopping_margin < -1e-7
+                    or result.max_abs_yaw_rate > robot.max_yaw_rate * 1.001
+                    or result.max_lateral_acceleration
+                    > robot.max_lateral_acceleration * 1.001
+                    or result.max_abs_wheel_speed
+                    > robot.max_wheel_speed * 1.001
+                    or result.max_abs_yaw_acceleration
+                    > robot.max_yaw_acceleration * 1.02
                 ):
                     raise AssertionError(
-                        f"safety invariant failed on {map_spec.name}/{route.name}"
+                        "safety or kinematic invariant failed on "
+                        f"{map_spec.name}/{route.name}/{obstacle.obstacle_id}"
                     )
                 rows.append(
                     (

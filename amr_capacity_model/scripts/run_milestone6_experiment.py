@@ -411,6 +411,13 @@ def main() -> None:
                 float(row["minimum_stopping_margin_m"]) >= -1e-7
                 for row in obstacle_rows
             ),
+            "bounded_route_kinematics": all(
+                float(row["yaw_rate_utilization"]) <= 1.001
+                and float(row["lateral_acceleration_utilization"]) <= 1.001
+                and float(row["wheel_speed_utilization"]) <= 1.001
+                and float(row["yaw_acceleration_utilization"]) <= 1.02
+                for row in obstacle_rows
+            ),
         },
         "claim_boundary": (
             "Synthetic recovery validates the estimator implementation. "
