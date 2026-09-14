@@ -218,8 +218,12 @@ relative traversal-time error at most 3% and absolute burden error
 \(|\Delta R_{\rm sn}|\le0.02\) is enforced only on the informative domain
 \(x\ge0.10\), because \(dR_{\rm sn}/dx\) is singular at zero. Low-burden fold
 errors, three-grid means, 95th percentiles, maxima, and worst-case identifiers
-remain reported rather than hidden. Severity loss itself is integrated with the
-trapezoidal rule over the fixed-step trajectory.
+remain reported rather than hidden. Traversal-time and burden tolerances are
+hard executable invariants. The transformed fold tolerance is a separate
+evidence check: smoke-data failure does not masquerade as a software failure,
+but the paper profile must pass it before a fold-resolution claim. Severity
+loss itself is integrated with the trapezoidal rule over the fixed-step
+trajectory.
 
 ## 4. Scope boundary
 
@@ -272,14 +276,16 @@ Generated files are:
 
 ## 6. Acceptance criteria before a paper claim
 
-The paper-profile run must satisfy all of the following:
+The paper-profile run—not the lower-resolution CI smoke run—must satisfy all
+of the following:
 
 - exposure-aware bias and interval coverage are reported at every true radius;
 - supercritical classification is not inferred from the naive estimator;
 - results include recovery-rate and nested-horizon sensitivity;
 - every kinematic rollout has zero collision and occupied-zone violations;
-- every route case passes the registered finest-grid time/burden tolerances
-  and every informative-burden row passes the fold-diagnostic tolerance;
+- every route case passes the registered finest-grid time/burden tolerances;
+- every informative-burden row passes the fold-diagnostic tolerance in the
+  paper profile;
 - every limit is reported in physical units;
 - turning time is included in \(T_0\), never in \(g\);
 - the independent multi-robot capacity-boundary experiment remains a separate
