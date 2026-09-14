@@ -209,12 +209,14 @@ activation violates the same contract. Every rollout records collision count,
 occupied-zone violation count, stopping margin, wheel speed, yaw rate, yaw
 acceleration, lateral acceleration, traversal delay, and severity-weighted
 loss. Every one of the 360 platform-route-obstacle-level cases is run on three nested
-time grids, \(\Delta t\), \(\Delta t/2\), and \(\Delta t/4\). Because guarded
-activation makes individual hybrid trajectories nonsmooth at switching
-surfaces, convergence is registered in aggregate rather than by an arbitrary
-per-row absolute cutoff: the mean and 95th-percentile errors for both traversal
-time and severity loss must not increase on the second halving. Maximum errors
-and their exact cases are still reported.
+time grids, \(\Delta t\), \(\Delta t/2\), and \(\Delta t/4\). Guarded activation
+makes individual hybrid trajectories nonsmooth at switching surfaces, so
+monotone Richardson convergence is not assumed. Grid independence is instead
+registered on the two finest grids for the observables used by the paper:
+relative traversal-time error at most 3%, absolute burden error
+\(|\Delta x|\le0.05\), and induced fold-curve error
+\(|\Delta R_{\rm sn}|\le0.02\). Three-grid means, 95th percentiles, maxima, and
+worst-case identifiers remain reported rather than hidden.
 
 ## 4. Scope boundary
 
@@ -273,7 +275,7 @@ The paper-profile run must satisfy all of the following:
 - supercritical classification is not inferred from the naive estimator;
 - results include recovery-rate and nested-horizon sensitivity;
 - every kinematic rollout has zero collision and occupied-zone violations;
-- the registered three-grid mean and 95th-percentile errors decrease;
+- every route case passes the registered finest-grid observable tolerances;
 - every limit is reported in physical units;
 - turning time is included in \(T_0\), never in \(g\);
 - the independent multi-robot capacity-boundary experiment remains a separate
