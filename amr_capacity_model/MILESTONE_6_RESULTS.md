@@ -216,7 +216,7 @@ registered on the two finest grids for the observables used by the paper:
 relative traversal-time error at most 3% and absolute burden error
 \(|\Delta x|\le0.05\) across every row. The induced fold-curve tolerance
 \(|\Delta R_{\rm sn}|\le0.02\) is enforced only on the informative domain
-\(x\ge0.05\), because \(dR_{\rm sn}/dx\) is singular at zero. Low-burden fold
+\(x\ge0.10\), because \(dR_{\rm sn}/dx\) is singular at zero. Low-burden fold
 errors, three-grid means, 95th percentiles, maxima, and worst-case identifiers
 remain reported rather than hidden. Severity loss itself is integrated with the
 trapezoidal rule over the fixed-step trajectory.
