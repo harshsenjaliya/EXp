@@ -1,0 +1,32 @@
+name: Milestone 6 validation
+
+on:
+  push:
+    branches:
+      - milestone-6
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: source_v0.5.0/amr_capacity_model
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: source_v0.5.0/amr_capacity_model/pyproject.toml
+      - name: Install package
+        run: python -m pip install --upgrade pip && python -m pip install -e .
+      - name: Compile source
+        run: python -m compileall -q src tests scripts
+      - name: Run unit tests
+        run: PYTHONPATH=src python -m unittest discover -s tests -v
