@@ -3,13 +3,15 @@
 This file specifies the closed periodic simulator. The open-boundary simulator
 is specified separately in [`OPEN_SYSTEM_SPEC.md`](OPEN_SYSTEM_SPEC.md).
 
-## Implemented abstraction
+## Implemented abstractions
 
-The current simulator models AGVs constrained to a one-way rectangular route.
+The baseline simulator models AGVs constrained to a one-way rectangular route.
 Fleet dynamics evolve in longitudinal route coordinate \(s\), and
-`RectangularLoop` maps \(s\) to \((x,y,\psi)\) for 2D output. This is suitable
-for a fixed-path AGV corridor experiment. It is not yet free-space navigation,
-multi-lane routing, a merge, or a grid planner.
+`RectangularLoop` maps \(s\) to \((x,y,\psi)\) for 2D output. Milestone 7 adds
+`network_simulation.py`: several named curvature-aware routes can now carry
+interacting finite fleets through merges and intersections with shared
+reservation zones. Both remain fixed-path abstractions; neither is presented as
+free-space navigation or a grid planner.
 
 At every fixed step, fleet operations are vectorized over robots. The time loop
 remains explicit so interventions have ordered causal semantics. For a fixed
@@ -98,19 +100,62 @@ random numbers in task and pedestrian processes.
 
 ## Known limitations and next additions
 
-- Route-coordinate separation is the collision abstraction; rectangular corner
-  footprint geometry is not modeled yet.
-- Only one lane and one crossing are implemented.
-- Open-system arrivals and task queues now exist in `open_system.py`; merges,
-  reservation zones, and scheduler decisions remain future work.
+- Route-coordinate stopping and a global center-distance check are the
+  collision abstractions; exact oriented-rectangle contact is not modeled.
+- The baseline corridor remains one lane, while the network layer supports
+  multiple named routes and shared conflict zones but not arbitrary rerouting.
+- Merge/intersection reservations are implemented; an optimizing scheduler and
+  zone-level reconfiguration remain future work.
 - Crossing visibility is nearest-robot-only and has not been ablated.
-- Statistical confidence intervals and sample-size selection are not yet part
-  of the experiment runner.
+- Cluster-bootstrap intervals and repeated-dataset calibration are implemented,
+  but the registered paper-profile sample sizes have not yet been executed.
 - A robot has one immediate leader at an instant, but an event can rarely
   parent more than one later event. The current serial layout therefore permits
   temporal fan-out, although the generated quick sweep does not show enough of
   it for a robust supercritical estimate. A merge or reservation-network layout
-  remains the intended amplification experiment.
+  is now implemented, while confidence-certified transition evidence remains a
+  paper-profile requirement.
+
+## Loaded route-network semantics
+
+Each network robot stores a route index, arc progress, speed, job identity,
+physical robot identity, severity accumulator, and active intervention ID.
+Nominal speed is interpolated from `plan_kinematic_speed_profile`, so curvature,
+yaw rate, lateral acceleration, wheel speed, acceleration, and braking affect
+travel time before any safety intervention is introduced.
+
+A conflict zone has one owner. The closest upstream robot receives ownership;
+the closest robot on every non-owner stream stops at the zone entry, and its
+followers react through ordinary leader shields. On an aligned shared merge
+segment, robots on different route namespaces can become proximate leaders.
+The simulator additionally checks all robot centers globally after every step.
+
+Guarded route disturbances use the same two-phase principle as open-corridor
+crossings. Robots already too close to stop clear the location; the nearest
+robot that can stop becomes the gate; occupation begins only when the protected
+interval is empty and the nearest approach is safe. Entry into an active
+interval fails immediately.
+
+The network event type defaults to route index. Experiments may retype the same
+events by severity before inference. Planned curvature slowdowns never start an
+intervention: an event begins only when a shield/reservation cap falls below the
+nominal kinematic profile, and it remains active through recovery to that
+profile.
+
+Every retained network run asserts:
+
+- exact job mass balance;
+- exact finite-fleet balance, including returning robots;
+- same-route next-step stopping invariance;
+- zero global physical overlap;
+- at most one conflict-zone occupant and correct ownership;
+- zero active-disturbance intrusion;
+- yaw-rate, lateral-acceleration, and wheel-speed limits.
+
+For N scaling, `extend_network_map` adds straight approach and exit storage
+without uniformly scaling away the central turn/conflict geometry. Experiments
+still report actual WIP, robots per metre of lane, and mean lane headway;
+configured fleet size is never used as a proxy for density.
 
 ## Finite-chain cohort rule
 

@@ -40,10 +40,22 @@ shield-coupled AMR fleet study. It implements:
 - exposure-aware censored multitype branching inference with rollout-cluster
   bootstrap, nested-horizon checks, recovery-kernel sensitivity, and known
   sub/supercritical synthetic validation;
+- joint offspring/recovery profile likelihood with a fixed-step grouped-time
+  observation model, timestamp audit, exposure-policy ablation, and fail-closed
+  three-way regime decisions;
+- repeated-outer-dataset calibration that measures interval coverage and
+  wrong-regime frequency rather than interpreting bootstrap mass as a
+  false-positive rate;
+- genuine finite-susceptible-population branching and an uncensored
+  extinction-duality control;
 - differential-drive kinematic speed envelopes, C2 spline/Bezier routes, static
   footprint clearance, and guarded route-obstacle benchmarks across six maps,
   three platform classes, three disturbance levels, and paired integration-step
-  convergence checks.
+  convergence checks;
+- loaded finite-fleet merge/intersection simulation with curvature-aware speed
+  profiles, shared-zone reservations, aligned cross-route following, paired
+  disturbance controls, route-scaled N=100/200/300 paper profiles, and exact
+  job/fleet/safety conservation checks.
 
 The equations describe a research model.  They do not constitute an industrial
 safety certification or a protective-field design method.
@@ -67,6 +79,9 @@ corrected non-normality experiment.
 See [`MILESTONE_6_RESULTS.md`](MILESTONE_6_RESULTS.md) for the censored
 likelihood, differential-drive formulation, map/obstacle catalogue, registered
 experiments, and explicit scope boundary.
+See [`MILESTONE_7_RESULTS.md`](MILESTONE_7_RESULTS.md) for joint recovery
+inference, grouped simulator logs, outer calibration, finite-population
+controls, loaded-network experiments, and the remaining publication gates.
 
 ## Run the validation suite
 
@@ -156,6 +171,22 @@ complete-tree ablation. The second computes curvature-aware nominal time and
 runs stationary obstacle, pedestrian, forklift, closure, and occlusion
 disturbances on straight, L-turn, S-curve, merge, intersection, and warehouse
 routes. Use `--profile paper` only for paper-facing estimates.
+
+## Run Milestone 7
+
+```bash
+PYTHONPATH=src python scripts/run_milestone7_experiment.py --profile smoke
+PYTHONPATH=src python scripts/run_milestone7_experiment.py --profile quick
+```
+
+Milestone 7 jointly fits the offspring matrix and recovery rates, audits
+same-step event ties, runs the grouped likelihood directly on simulator logs,
+measures repeated-dataset interval coverage, exercises genuine population
+depletion, and runs interacting robots on the merge and intersection maps.
+The quick profile includes N=200 as a scale/invariant probe but has too few
+independent network clusters for certified regime labels. Only the expensive
+`--profile paper` configuration is registered for paper-facing confidence
+claims.
 
 After generating the experiments, run the fail-closed claim ledger:
 

@@ -194,6 +194,69 @@ test transfer.
   algebraically circular. Paper-facing validation must fit on training
   rollouts and score on separate held-out rollouts.
 
+## Joint recovery inference and grouped observation model
+
+Milestone 7 removes the known-recovery assumption. For a fixed recovery rate,
+the offspring mean retains its closed-form profile estimate
+
+\[
+\widehat B_{ab}(\gamma)
+=\frac{N_{ab}}
+{\sum_i(1-e^{-\gamma C_i})}.
+\]
+
+`estimate_joint_censored_multitype_branching` profiles each positive
+\(\gamma_{ab}\) in one dimension and returns the fitted matrix, recovery
+matrix, boundary flags, sufficient statistics, and spectral radius. Recovery
+bounds are part of the model specification; entries whose optimum reaches a
+bound are reported rather than silently accepted.
+
+For fixed-step event logs, child age is an observed lag bin rather than an
+exact continuous timestamp. With grid \(\Delta\),
+
+\[
+q_{ab}(k)=e^{-\gamma_{ab}k\Delta}
+\left(1-e^{-\gamma_{ab}\Delta}\right).
+\]
+
+The grouped likelihood uses \(\log q_{ab}(k)\), including finite mass for
+same-step children at \(k=0\). `audit_branching_timestamps` measures the
+zero-lag fraction and grid error before model selection. Adding random jitter
+to break timestamp ties is not permitted.
+
+The simulator adapter exposes two non-interchangeable exposure policies:
+
+- `observation_window` is the registered Hawkes interpretation and follows a
+  point event until the rollout boundary;
+- `active_interval` truncates influence when the physical intervention ends
+  and is reported as an ablation.
+
+Cluster bootstrap samples entire rollout namespaces. Operational decisions use
+`classify_branching_regime`: an interval wholly below one is certified
+subcritical, wholly above one is certified supercritical, and every overlap is
+indeterminate. Bootstrap mass above one is not called a frequentist
+false-positive probability. Repeated outer datasets measure coverage and
+wrong-regime frequency directly.
+
+## Genuine finite-population control
+
+`simulate_depleting_branching_rollout` gives every type a finite susceptible
+population. An accepted event consumes one susceptible individual and queued
+candidate births compete in chronological order. This is distinct from
+stopping an unbounded tree after N records. It permits the estimator's
+finite-population bias and cap frequency to be measured as N grows.
+
+`poisson_extinction_probability` and `simulate_extinct_poisson_trees` isolate
+the Galton--Watson duality. For Poisson mean \(m>1\), complete extinct trees
+have dual offspring mean \(mq\), where
+
+\[
+q=e^{m(q-1)}.
+\]
+
+No temporal horizon is used in that control; trees reaching a large guard are
+discarded rather than mislabeled extinct.
+
 The quasi-stationary Little's-law closure is now directly diagnosable using
 `little_law_diagnostic`, but numerical agreement in one operating window is not
 a proof of timescale separation. The load-ramp experiment reports matched

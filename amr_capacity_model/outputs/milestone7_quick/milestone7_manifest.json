@@ -1,0 +1,116 @@
+{
+  "profile": "quick",
+  "settings": {
+    "outer_datasets": 12,
+    "outer_rollouts": 180,
+    "outer_bootstrap": 80,
+    "bridge_rates": [
+      0.2,
+      0.35,
+      0.5,
+      0.7
+    ],
+    "bridge_duration": 180.0,
+    "bridge_replications": 6,
+    "network_fleets": [
+      50,
+      100,
+      200
+    ],
+    "network_loads": [
+      0.4,
+      0.7,
+      1.0
+    ],
+    "network_replications": 2,
+    "network_min_duration": 180.0,
+    "network_bootstrap": 80,
+    "depletion_rollouts": 500,
+    "extinction_rollouts": 20000
+  },
+  "outputs": [
+    "milestone7_claim_ledger.json",
+    "milestone7_density_phase.png",
+    "milestone7_extinction_duality.csv",
+    "milestone7_manifest.json",
+    "milestone7_network_matrix.csv",
+    "milestone7_network_runs.csv",
+    "milestone7_network_summary.csv",
+    "milestone7_outer_calibration_runs.csv",
+    "milestone7_outer_calibration_summary.csv",
+    "milestone7_population_depletion.csv",
+    "milestone7_simulator_bridge.csv",
+    "milestone7_simulator_bridge_matrix.csv",
+    "milestone7_summary.png"
+  ],
+  "calibration_summary": [
+    {
+      "profile": "quick",
+      "true_rho": 0.85,
+      "outer_datasets": 12,
+      "coverage_frequency": 1.0,
+      "mean_joint_rho": 0.8545743462889875,
+      "joint_mae": 0.03116164243623885,
+      "known_gamma_mae": 0.02807989947256286,
+      "certified_subcritical_frequency": 0.75,
+      "indeterminate_frequency": 0.25,
+      "certified_supercritical_frequency": 0.0,
+      "wrong_regime_frequency": 0.0
+    },
+    {
+      "profile": "quick",
+      "true_rho": 1.0,
+      "outer_datasets": 12,
+      "coverage_frequency": 0.8333333333333334,
+      "mean_joint_rho": 0.9919180274748532,
+      "joint_mae": 0.03753752051140283,
+      "known_gamma_mae": 0.026291509128077668,
+      "certified_subcritical_frequency": 0.08333333333333333,
+      "indeterminate_frequency": 0.8333333333333334,
+      "certified_supercritical_frequency": 0.08333333333333333,
+      "wrong_regime_frequency": 0.16666666666666666
+    },
+    {
+      "profile": "quick",
+      "true_rho": 1.15,
+      "outer_datasets": 12,
+      "coverage_frequency": 0.9166666666666666,
+      "mean_joint_rho": 1.1862321253056345,
+      "joint_mae": 0.04860347164319114,
+      "known_gamma_mae": 0.024982260758749097,
+      "certified_subcritical_frequency": 0.0,
+      "indeterminate_frequency": 0.0,
+      "certified_supercritical_frequency": 1.0,
+      "wrong_regime_frequency": 0.0
+    }
+  ],
+  "claim_ledger": {
+    "profile": "quick",
+    "software_gates": {
+      "outer_calibration_executed": true,
+      "simulator_log_bridge_executed": true,
+      "grouped_model_used_when_zero_lags_exist": true,
+      "genuine_population_depletion_observed": true,
+      "extinction_duality_absolute_error_below_0_05": true,
+      "network_safety_invariants_pass": true,
+      "merge_and_intersection_both_executed": true
+    },
+    "evidence_gates": {
+      "boundary_wrong_regime_frequency_at_most_0_05": false,
+      "boundary_wrong_regime_frequency": 0.16666666666666666,
+      "outer_coverage_target_0_90": true,
+      "N200_executed": true,
+      "physical_point_rho_crossing_observed": true,
+      "physical_confidence_certified_crossing_observed": false,
+      "throughput_turnover_observed": true
+    },
+    "scope": {
+      "smoke_and_quick_profiles_are_not_paper_claims": true,
+      "burden_names": [
+        "x_primary_fleet",
+        "x_total_fleet"
+      ],
+      "route_obstacle_burden_x_route_is_not_reused_here": true
+    }
+  }
+}
