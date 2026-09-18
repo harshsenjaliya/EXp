@@ -1,0 +1,29 @@
+{
+  "profile": "quick",
+  "software_gates": {
+    "outer_calibration_executed": true,
+    "simulator_log_bridge_executed": true,
+    "grouped_model_used_when_zero_lags_exist": true,
+    "genuine_population_depletion_observed": true,
+    "extinction_duality_absolute_error_below_0_05": true,
+    "network_safety_invariants_pass": true,
+    "merge_and_intersection_both_executed": true
+  },
+  "evidence_gates": {
+    "boundary_wrong_regime_frequency_at_most_0_05": false,
+    "boundary_wrong_regime_frequency": 0.16666666666666666,
+    "outer_coverage_target_0_90": true,
+    "N200_executed": true,
+    "physical_point_rho_crossing_observed": true,
+    "physical_confidence_certified_crossing_observed": false,
+    "throughput_turnover_observed": true
+  },
+  "scope": {
+    "smoke_and_quick_profiles_are_not_paper_claims": true,
+    "burden_names": [
+      "x_primary_fleet",
+      "x_total_fleet"
+    ],
+    "route_obstacle_burden_x_route_is_not_reused_here": true
+  }
+}
