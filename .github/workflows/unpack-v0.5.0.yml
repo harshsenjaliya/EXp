@@ -1,0 +1,47 @@
+name: Unpack v0.5.0 source
+
+on:
+  push:
+    branches:
+      - milestone-6
+
+permissions:
+  contents: write
+
+jobs:
+  unpack:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out milestone branch
+        uses: actions/checkout@v4
+
+      - name: Extract archive safely
+        shell: python
+        run: |
+          import zipfile
+          from pathlib import Path, PurePosixPath
+
+          archive = Path("amr_capacity_model_v0.5.0.zip")
+          destination = Path("source_v0.5.0")
+          destination.mkdir(exist_ok=True)
+
+          with zipfile.ZipFile(archive) as bundle:
+              for member in bundle.infolist():
+                  path = PurePosixPath(member.filename)
+                  if path.is_absolute() or ".." in path.parts:
+                      raise RuntimeError(f"Unsafe archive member: {member.filename}")
+              bundle.extractall(destination)
+
+      - name: Commit extracted project
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add source_v0.5.0
+          if git diff --cached --quiet; then
+            echo "Archive was already extracted."
+            exit 0
+          fi
+          git commit -m "chore: unpack v0.5.0 source for Milestone 6"
+          git push

@@ -1,0 +1,64 @@
+{
+  "profile": "quick",
+  "seed": 20260914,
+  "config": {
+    "corridor_length": 30.0,
+    "desired_speed": 1.2,
+    "acceleration": 1.0,
+    "braking": 1.5,
+    "reaction_time": 0.2,
+    "dt": 0.05,
+    "robot_length": 0.8,
+    "safety_margin": 0.2,
+    "sensor_range": 8.0,
+    "crossing_x": 15.0,
+    "crossing_half_width": 0.4,
+    "admission_speed": 0.0,
+    "intervention_tolerance": 0.0001,
+    "collision_tolerance": 1e-09,
+    "fleet_size": null,
+    "empty_return_time": 0.0
+  },
+  "settings": {
+    "rates": [
+      0.35,
+      0.5,
+      0.6,
+      0.65,
+      0.7,
+      0.8
+    ],
+    "duration": 240.0,
+    "replications": 3,
+    "ramp_slow_dwell": 80.0,
+    "ramp_fast_dwell": 30.0,
+    "bootstrap_resamples": 1000,
+    "fleet_sizes": [
+      2,
+      3,
+      5,
+      8,
+      12,
+      20,
+      30
+    ],
+    "fleet_replications": 2
+  },
+  "capacity_brackets": {
+    "crossings": {
+      "largest_no_growth_rate": 0.65,
+      "smallest_growth_rate": 0.8
+    },
+    "no_crossings": {
+      "largest_no_growth_rate": 0.65,
+      "smallest_growth_rate": 0.8
+    }
+  },
+  "interpretation": {
+    "finite_run_labels": "no_growth_detected and growth_detected are evidence labels, not proofs of positive recurrence or instability",
+    "ramp_gap": "each equal-load segment reuses its task and disturbance pattern; up/down separation relative to the matched empty-start replay is dynamic memory, not evidence of static bistability",
+    "fold_diagnostic": "the parameter-free curve is shown only as a reference; the single-gate data neither cover its varying domain nor contain an independently detected fold",
+    "finite_fleet": "the physical-fleet sweep enforces active + returning + available = N at every integration step",
+    "open_branching": "the scalar in-sample resolvent is flagged as a chain-forest identity; open_heldout_branching.csv scores only independent replications and does not identify supercriticality"
+  }
+}

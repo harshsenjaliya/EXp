@@ -1,0 +1,91 @@
+{
+  "verdict": "research_instrument_ready_hypothesis_not_yet_validated",
+  "invariants": {
+    "generated_safety_or_balance_failures": 0,
+    "unit_and_integration_test_count": 73
+  },
+  "domain_coverage": {
+    "legacy_single_gate_x_min": 0.0,
+    "legacy_single_gate_x_max": 0.005211729546372959,
+    "distributed_stress_x_min": 0.004674656390731021,
+    "distributed_stress_x_max": 0.9107542541577597,
+    "target_domain_conditions": [
+      "K12_dist",
+      "K16_dist",
+      "K16_dense",
+      "K16_midload",
+      "K16_long",
+      "K16_extreme"
+    ],
+    "single_gate_overloaded_conditions": []
+  },
+  "branching_validation": {
+    "legacy_rows_with_exact_chain_identity": 7,
+    "legacy_rows_total": 18,
+    "standard_quick_profile_determinate_heldout_conditions": 0,
+    "stress_profile_uses_heldout_replications": true,
+    "single_lane_temporal_fanout_is_possible": true,
+    "supercriticality_estimated_in_current_complete_cohorts": false
+  },
+  "finite_boundary": {
+    "nonvacuous_rows": 14,
+    "vacuous_phi_one_rows": 3,
+    "practical_tie_tolerance_percentage_points": 1.0,
+    "plain_scalar_mean_absolute_error": 0.14025873360602345,
+    "boundary_finite_mean_absolute_error": 0.1373252046404853,
+    "boundary_finite_wins": 4,
+    "boundary_finite_losses": 3,
+    "practical_ties": 7,
+    "speed_1p8_complete_forest_error": 0.04807692307692301,
+    "speed_1p8_boundary_infinite_error": 2.028846153846147,
+    "speed_1p8_boundary_finite_error": 0.0329025356960266,
+    "speed_2p0_boundary_phi": 1.0,
+    "speed_2p0_finite_prediction": 20.0,
+    "speed_2p0_heldout_unique_robots": 20.0,
+    "predictive_advantage_supported": false,
+    "reason": "mean errors are nearly identical and phi=1 rows are algebraic fleet-boundary identities"
+  },
+  "multitype": {
+    "maximum_substantive_spectral_radius": 0.8744019138755981,
+    "supercritical_estimate_observed": false,
+    "maximum_spatial_G_star_over_spectral_proxy": 4.218879183758715,
+    "direct_lp_G_star_agreement": true,
+    "root_gate_control_is_diagonal": true,
+    "primary_mix_identity_rows": 42,
+    "primary_mix_identity_rows_total": 42,
+    "complete_forest_rho_bound_rows": 42,
+    "complete_forest_rho_bound_rows_total": 42,
+    "event_id_namespace_guard": "implemented_and_unit_tested",
+    "complete_primary_roots": 1144,
+    "fanout_parent_events": 6,
+    "maximum_direct_children": 2
+  },
+  "negative_results": {
+    "faster_is_slower_observed": false,
+    "closed_speed_max_tested": 2.0,
+    "closed_density_max_safe_tested": 33,
+    "fold_observed": false,
+    "collapse_observed": false,
+    "serial_request_rate_increases_x_monotonically": false
+  },
+  "claims": {
+    "supported": [
+      "collision-free invariant-checked multi-crossing simulation",
+      "distributed disturbance burden coverage across x approximately 0.005 to 0.91",
+      "in-sample scalar chain-resolvent agreement is structurally circular",
+      "held-out chain-length transfer is measurable without that identity",
+      "serial downstream starvation makes burden nonmonotone in request rate",
+      "spatial typing exposes non-normal G-star amplification in the subcritical regime",
+      "root-gate inheritance is a diagonal negative control",
+      "duplicate rollout-local event IDs are rejected before estimation"
+    ],
+    "not_supported": [
+      "saddle-node fold validation",
+      "capacity collapse",
+      "faster-is-slower turnover",
+      "predictive advantage of the finite-chain estimator",
+      "supercritical multi-type branching in the current corridor",
+      "industrial external validity"
+    ]
+  }
+}
