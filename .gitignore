@@ -1,0 +1,9 @@
+**/__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+package_clean/
+amr_capacity_model/build/
+amr_capacity_model/src/*.egg-info/
+amr_capacity_model/outputs/milestone7_smoke*/
+amr_capacity_model/outputs/milestone7_quick_v*/

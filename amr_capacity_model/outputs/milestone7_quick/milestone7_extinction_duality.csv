@@ -1,0 +1,2 @@
+profile,true_mean,extinction_probability,dual_mean_mq,empirical_extinct_tree_mean,absolute_error,retained_extinct_trees,simulated_trees
+quick,1.3,0.5770300479387073,0.7501390623203195,0.7501776906674708,3.862834715129271e-05,11599,20000
